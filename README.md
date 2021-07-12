@@ -21,6 +21,18 @@
 
 3. Configure The FortiGate K8S Connector
 
+    * Create a ServiceAccount for the FortiGate
+    * Create a clusterrole
+    * Create a clusterrolebinding
+    * Extract the ServiceAccount secret token and configure the FortiGate
+
+You can extract the secret token using the following command
+
+```
+kubectl get secret $(kubectl get serviceaccount fgt-svcaccount -o jsonpath='{range .secrets[*]}{.name}{"\n"}{end}' | grep token) -o go-template='{{.data.token | base64decode}}' && echo
+
+``` 
+
 4. Questions
 
 ## Chapter 3 - Create the RunBook and configure ForiGate Automation Stiches
