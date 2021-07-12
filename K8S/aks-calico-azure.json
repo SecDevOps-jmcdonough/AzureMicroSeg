@@ -1,0 +1,37 @@
+{
+    "apiVersion": "vlabs",
+    "properties": {
+        "orchestratorProfile": {
+            "kubernetesConfig": {
+                "networkPlugin": "azure",
+                "networkPolicy": "calico"
+            }
+        },
+        "masterProfile": {
+            "count": 1,
+            "dnsPrefix": "useyourown",
+            "vmSize": "Standard_D2_v3",
+            "vnetSubnetId": "/subscriptions/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/resourceGroups/XXXXX/providers/Microsoft.Network/virtualNetworks/XXXXXXX/subnets/XXXXXXX",
+            "firstConsecutiveStaticIP": "put-your-own"
+        },
+        "agentPoolProfiles": [
+            {
+                "name": "nodepool1",
+                "count": 1,
+                "vmSize": "Standard_D2_v3",
+                "vnetSubnetId": "/subscriptions/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/resourceGroups/XXXXX/providers/Microsoft.Network/virtualNetworks/XXXXXXX/subnets/XXXXXXX",
+                "availabilityProfile": "AvailabilitySet"
+            }
+        ],
+        "linuxProfile": {
+            "adminUsername": "useyourown",
+            "ssh": {
+                "publicKeys": [
+                    {
+                        "keyData": ""
+                    }
+                ]
+            }
+        }
+    }
+}
