@@ -16,9 +16,7 @@
 ## Chapter 2 - Create the environment 
 
 1. Create the environment
-
 2. Deploy the Self-Managed cluster
-
 3. Configure The FortiGate K8S Connector
 
     * Create a ServiceAccount for the FortiGate
@@ -35,12 +33,9 @@ kubectl get secret $(kubectl get serviceaccount fgt-svcaccount -o jsonpath='{ran
 
 4. Questions
 
-## Chapter 3 - Create the RunBook and configure ForiGate Automation Stiches
+## Chapter 3 - Create the RunBook and configure the ForiGate Automation Stiches
 
 1. Create the runbook
-
 2. Configure The FortiGate Automation Trigger 
-
 3. Configure The FortiGate Automation Action
-
 4. Questions
