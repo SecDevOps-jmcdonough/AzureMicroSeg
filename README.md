@@ -33,9 +33,33 @@ kubectl get secret $(kubectl get serviceaccount fgt-svcaccount -o jsonpath='{ran
 
 4. Questions
 
-## Chapter 3 - Create the RunBook and configure the ForiGate Automation Stiches
+## Chapter 3 - Create the RunBook and configure the FortiGate Automation Stitches
 
-1. Create the runbook
-2. Configure The FortiGate Automation Trigger 
-3. Configure The FortiGate Automation Action
-4. Questions
+1. Azure Automation Account
+    - Create Automation Account
+    - Setup Automation Account Managed Identity
+    - Import Az PowerShell Modules
+        - Az.Accounts - This module needs to be imported first as the other modules have a dependency on it
+        - Az.Automation
+        - Az.Compute
+        - Az.Network
+        - Az.Resources
+2. Azure Automation Runbook
+    - Create Runbook
+    - Create Webhook
+3. FortiGate Dynamic Address
+    - Create Dynamic Address
+        - Filter
+4. FortiGate Automation Stitch
+    - Trigger
+        - Log Address Added
+        - Log Address Removed
+    - Action
+        - Webhook
+        - Body
+        - Headers
+    - Stitch
+        - Trigger
+        - Action
+    
+5. Questions
