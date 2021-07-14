@@ -2,6 +2,10 @@
 
 ## Workshop main objectives
 
+* Deploy Kubernetes Cluster
+* Deploy Azure Automation
+* Manage Micro Segmentation of Kubernetes Pods with FortiGate Automation Stitch
+
 ## Chapter 1 - Preparation Steps
 
 1. Ensure you have the following tools installed:
@@ -12,12 +16,11 @@
     * kubectl,  <https://kubernetes.io/docs/tasks/tools/>
     * aks-engine v0.65.0, <https://github.com/Azure/aks-engine/releases/>
 
-
 ## Chapter 2 - Create the environment
 
 1. Create the environment
-2. Deploy the Self-Managed cluster
-3. Configure The FortiGate K8S Connector
+1. Deploy the Self-Managed cluster
+1. Configure The FortiGate K8S Connector
 
     * Create a ServiceAccount for the FortiGate
     * Create a clusterrole
@@ -30,7 +33,7 @@ You can extract the secret token using the following command
 kubectl get secret $(kubectl get serviceaccount fgt-svcaccount -o jsonpath='{range .secrets[*]}{.name}{"\n"}{end}' | grep token) -o go-template='{{.data.token | base64decode}}' && echo
 ```
 
-4. Questions
+1. Questions
 
 ## Chapter 3 - Create the RunBook and configure the FortiGate Automation Stitches
 
