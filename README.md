@@ -58,10 +58,10 @@ This exercise covers the
 
         ```PowerShell
         New-AzResourceGroup -Name automation-01 -Location eastus2
-        New-AzAutomationAccount -Name user-automation-01 -ResourceGroupName automation-01 -Location eastus2 -AssignSystemIdentity -Plan Basic
+        New-AzAutomationAccount -ResourceGroupName automation-01 -Location eastus2 -Name user-automation-01  -AssignSystemIdentity -Plan Basic
         ```
 
-    * Setup Automation Account Managed Identity
+    * Setup Automation Account [Managed Identity] (<https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview>)
 
         ```PowerShell
         New-AzRoleAssignment -ObjectId (Get-AzAutomationAccount -ResourceGroupName automation-01 -Name user-automation-01).Identity.PrincipalId -RoleDefinitionName "Contributor"
@@ -75,17 +75,17 @@ This exercise covers the
         * Az.Resources
 
         ```PowerShell
-        @("Automation","Compute","Network","Resources") | %{Import-AzAutomationModule -Name Az.$_ -AutomationAccountName user-automation-01 -ResourceGroupName automation-01 -ContentLinkUri https://www.powershellgallery.com/api/v2/package/Az.$_}
-        New-AzRoleAssignment -ObjectId (Get-AzAutomationAccount -ResourceGroupName automation-01 -Name user-automation-01).Identity.PrincipalId -RoleDefinitionName "Contributor"
+        Import-AzAutomationModule -ResourceGroupName automation-01 -AutomationAccountName user-automation-01 -Name Az.Accounts  -ContentLinkUri https://www.powershellgallery.com/api/v2/package/Az.Accounts
+        @("Automation","Compute","Network","Resources") | ForEach-Object {Import-AzAutomationModule -ResourceGroupName automation-01 -AutomationAccountName user-automation-01 -Name Az.$_  -ContentLinkUri https://www.powershellgallery.com/api/v2/package/Az.$_}
         ```
 
 2. Azure Automation Runbook
     * Create, Import, and Publish Runbook
 
         ```PowerShell
-        New-AzureRmAutomationRunbook -Name ManageDynamicAddressRoutes -Type PowerShell -ResourceGroupName automation-01 -AutomationAccountName user-automation-01
-        Import-AzureRmAutomationRunbook -Name ManageDynamicAddressRoutes -Path .\ManageDynamicAddressRoutes.ps1 -Type PowerShell -ResourceGroupName automation-01 -AutomationAccountName user-automation-01 –Force
-        Publish-AzureRmAutomationRunbook -AutomationAccountName user-automation-01 -ResourceGroupName automation-01 -Name ManageDynamicAddressRoutes
+        New-AzAutomationRunbook -ResourceGroupName automation-01 -AutomationAccountName user-automation-01 -Name ManageDynamicAddressRoutes -Type PowerShell
+        Import-AzAutomationRunbook -Name ManageDynamicAddressRoutes -ResourceGroupName automation-01 -AutomationAccountName user-automation-01 -Path .\ManageDynamicAddressRoutes.ps1 -Type PowerShell –Force
+        Publish-AzAutomationRunbook -ResourceGroupName automation-01 -AutomationAccountName user-automation-01 -Name ManageDynamicAddressRoutes
         ```
 
     * Create Webhook
@@ -108,7 +108,7 @@ This exercise covers the
         LastModifiedTime      : 7/13/2021 8:33:28 PM +00:00
         Parameters            : {}
         RunbookName           : ManageDynamicAddressRoutes
-        WebhookURI            : https://f5f015ed-566f-483d-972c-0c2c3ca2a296.webhook.eus2.azure-automation.net/webhooks?token=P1GSd4Tasf5i1VYaVkFQvG29QCjkA8AOHY%2bsVLZOFSA%3d
+        WebhookURI            : https://f5f015ed-f566-483d-c972-0c2c3ca2a296.webhook.eus2.azure-automation.net/webhooks?token=P1GSd4Tasf5i1VYaVkFQvG29QCjkA8AOHY%2bsVLZOFSA%3d
         HybridWorker          :
         ```
 
