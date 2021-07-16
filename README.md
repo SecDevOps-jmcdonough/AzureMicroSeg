@@ -17,7 +17,7 @@
 
 ![clone](images/git_clone.jpg)     
 
-    * download aks-engine v0.65.0, <https://github.com/Azure/aks-engine/releases/>
+    * download aks-engine and transfer the binary to your home directory
 
 ```
 wget https://github.com/Azure/aks-engine/releases/download/v0.64.0/aks-engine-v0.64.0-linux-amd64.zip
@@ -34,12 +34,16 @@ chmod +x aks-engine
 
 2. Deploy the Self-Managed cluster using aks-engine. Customize the deployment file to your own environment
 ```
-./aks-engine deploy --resource-group k8s-microseg --location eastus --api-model ./aks-calico-azure.json
+./aks-engine deploy --resource-group k8s-microseg --location eastus --api-model ./AzureMicroSeg/K8S/aks-calico-azure.json
 ```
 
 3. Verify that the deployment is successful by listing the K8S nodes
 
 ![clone](images/k8s-nodes.jpg)
+
+At the end of this step you should have the following setup
+
+![Globalenvironment2](images/environment_chapter2)
 
 4. Configure The FortiGate K8S Connector and verify that it's UP
 
@@ -54,7 +58,16 @@ You can extract the secret token using the following command
 kubectl get secrets -o jsonpath="{.items[?(@.metadata.annotations['kubernetes\.io/service-account\.name']=='fgt-svcaccount')].data.token}"| base64 --decode
 ```
 
-4. Questions
+
+5. Questions
+**************
+
+    * Why the aks-engine deployment created Load balancers?
+    * Why a UDP/1123 load balacing rule has been created on the Master LB?    
+    * How many PODs can the deployed Node accomodate?
+    * If we want to protect communications to the Master Node through the FortiGate, what are the changes required ?    
+
+
 
 ## Chapter 3 - Create the RunBook and configure the FortiGate Automation Stitches
 
