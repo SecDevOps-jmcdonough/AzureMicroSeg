@@ -19,12 +19,12 @@
 
     * download aks-engine and transfer the binary to your home directory
 
-```
-wget https://github.com/Azure/aks-engine/releases/download/v0.64.0/aks-engine-v0.64.0-linux-amd64.zip
-unzip aks-engine-v0.64.0-linux-amd64.zip
-mv aks-engine-v0.64.0-linux-amd64/aks-engine ./
-chmod +x aks-engine 
-```    
+        ```
+        wget https://github.com/Azure/aks-engine/releases/download/v0.64.0/aks-engine-v0.64.0-linux-amd64.zip
+        unzip aks-engine-v0.64.0-linux-amd64.zip
+        mv aks-engine-v0.64.0-linux-amd64/aks-engine ./
+        chmod +x aks-engine 
+        ```    
 
 ## Chapter 2 - Create the environment [estimated duration 20min]
 
@@ -33,9 +33,11 @@ chmod +x aks-engine
 ![Globalenvironment](images/environment.jpg)
 
 2. Deploy the Self-Managed cluster using aks-engine. Customize the deployment file to your own environment
-```
-./aks-engine deploy --resource-group k8s-microseg --location eastus --api-model ./AzureMicroSeg/K8S/aks-calico-azure.json
-```
+    
+    ```
+    ./aks-engine deploy --resource-group k8s-microseg --location eastus --api-model ./AzureMicroSeg/K8S/aks-calico-azure.json
+    
+    ```
 
 3. Verify that the deployment is successful by listing the K8S nodes
 
@@ -54,9 +56,9 @@ At the end of this step you should have the following setup
 
 You can extract the secret token using the following command
 
-```
-kubectl get secrets -o jsonpath="{.items[?(@.metadata.annotations['kubernetes\.io/service-account\.name']=='fgt-svcaccount')].data.token}"| base64 --decode
-```
+    ```
+    kubectl get secrets -o jsonpath="{.items[?(@.metadata.annotations['kubernetes\.io/service-account\.name']=='fgt-svcaccount')].data.token}"| base64 --decode
+    ```
 
 **************
 
@@ -65,7 +67,7 @@ kubectl get secrets -o jsonpath="{.items[?(@.metadata.annotations['kubernetes\.i
     * Why the aks-engine deployment created Load balancers?
     * Why a UDP/1123 load balacing rule has been created on the Master LB?    
     * How many PODs can the deployed Node accomodate?
-    * If we want to protect communications to the Master Node through the FortiGate, what are the changes required ?    
+    * If we want to make the communication to the MasterNode go through the FortiGate, what are the changes required ?    
 
 **************
 
@@ -91,14 +93,13 @@ This exercise covers the
     * Create Automation Account
 
         ```PowerShell
-        New-AzResourceGroup -Name automation-01 -Location eastus2
-        New-AzAutomationAccount -ResourceGroupName automation-01 -Location eastus2 -Name user-automation-01  -AssignSystemIdentity -Plan Basic
+        New-AzAutomationAccount -ResourceGroupName k8s-microseg -Location eastus -Name user-automation-01  -AssignSystemIdentity -Plan Basic
         ```
 
     * Setup Automation Account [Managed Identity] (<https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview>)
 
         ```PowerShell
-        New-AzRoleAssignment -ObjectId (Get-AzAutomationAccount -ResourceGroupName automation-01 -Name user-automation-01).Identity.PrincipalId -RoleDefinitionName "Contributor"
+        New-AzRoleAssignment -ObjectId (Get-AzAutomationAccount -ResourceGroupName k8s-microseg -Name user-automation-01).Identity.PrincipalId -RoleDefinitionName "Contributor" -Scope (Get-AzResourceGroup -Name k8s-microseg -Location eastus).ResourceId
         ```
 
     * Import Az PowerShell Modules
@@ -109,23 +110,25 @@ This exercise covers the
         * Az.Resources
 
         ```PowerShell
-        Import-AzAutomationModule -ResourceGroupName automation-01 -AutomationAccountName user-automation-01 -Name Az.Accounts  -ContentLinkUri https://www.powershellgallery.com/api/v2/package/Az.Accounts
-        @("Automation","Compute","Network","Resources") | ForEach-Object {Import-AzAutomationModule -ResourceGroupName automation-01 -AutomationAccountName user-automation-01 -Name Az.$_  -ContentLinkUri https://www.powershellgallery.com/api/v2/package/Az.$_}
+        Import-AzAutomationModule -ResourceGroupName k8s-microseg -AutomationAccountName user-automation-01 -Name Az.Accounts  -ContentLinkUri https://www.powershellgallery.com/api/v2/package/Az.Accounts
+        @("Automation","Compute","Network","Resources") | ForEach-Object {Import-AzAutomationModule -ResourceGroupName k8s-microseg -AutomationAccountName user-automation-01 -Name Az.$_  -ContentLinkUri https://www.powershellgallery.com/api/v2/package/Az.$_}
         ```
 
 2. Azure Automation Runbook
     * Create, Import, and Publish Runbook
 
         ```PowerShell
-        New-AzAutomationRunbook -ResourceGroupName automation-01 -AutomationAccountName user-automation-01 -Name ManageDynamicAddressRoutes -Type PowerShell
-        Import-AzAutomationRunbook -Name ManageDynamicAddressRoutes -ResourceGroupName automation-01 -AutomationAccountName user-automation-01 -Path .\ManageDynamicAddressRoutes.ps1 -Type PowerShell –Force
-        Publish-AzAutomationRunbook -ResourceGroupName automation-01 -AutomationAccountName user-automation-01 -Name ManageDynamicAddressRoutes
+        New-AzAutomationRunbook -ResourceGroupName k8s-microseg -AutomationAccountName user-automation-01 -Name ManageDynamicAddressRoutes -Type PowerShell
+        
+        Import-AzAutomationRunbook -Name ManageDynamicAddressRoutes -ResourceGroupName k8s-microseg -AutomationAccountName user-automation-01 -Path ./AzureMicroSeg/Azure/ManageDynamicAddressRoutes.ps1 -Type PowerShell –Force
+        
+        Publish-AzAutomationRunbook -ResourceGroupName k8s-microseg -AutomationAccountName user-automation-01 -Name ManageDynamicAddressRoutes
         ```
 
     * Create Webhook
 
         ```PowerShell
-        New-AzAutomationWebhook -ResourceGroupName automation-01 -AutomationAccountName user-automation-01 -RunbookName ManageDynamicAddressRoutes -Name routetableupdate -IsEnabled $True -ExpiryTime "07/12/2022" -Force
+        New-AzAutomationWebhook -ResourceGroupName k8s-microseg -AutomationAccountName user-automation-01 -RunbookName ManageDynamicAddressRoutes -Name routetableupdate -IsEnabled $True -ExpiryTime "07/12/2022" -Force
         ```
 
         The output will include the URL of the enabled webhook. The webhook is only viewable at creation and cannot be retrieved afterwards. The output will look similar to below.
