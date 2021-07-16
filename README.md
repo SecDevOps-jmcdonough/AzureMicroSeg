@@ -15,7 +15,7 @@
 
     * Clone the repository in your cloud shell
 
-![clone](images/git_clone.jpg)     
+        ![clone](images/git_clone.jpg)     
 
     * download aks-engine and transfer the binary to your home directory
 
@@ -58,16 +58,16 @@ You can extract the secret token using the following command
 kubectl get secrets -o jsonpath="{.items[?(@.metadata.annotations['kubernetes\.io/service-account\.name']=='fgt-svcaccount')].data.token}"| base64 --decode
 ```
 
+**************
 
 5. Questions
-**************
 
     * Why the aks-engine deployment created Load balancers?
     * Why a UDP/1123 load balacing rule has been created on the Master LB?    
     * How many PODs can the deployed Node accomodate?
     * If we want to protect communications to the Master Node through the FortiGate, what are the changes required ?    
 
-
+**************
 
 ## Chapter 3 - Create the RunBook and configure the FortiGate Automation Stitches
 
