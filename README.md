@@ -15,7 +15,7 @@
 
     * Clone the repository in your cloud shell
 
-![clone] (https://github.com/FortinetSecDevOps/AzureMicroSeg/blob/main/images/git_clone.jpg)     
+![clone](images/git_clone.jpg)     
 
     * download aks-engine v0.65.0, <https://github.com/Azure/aks-engine/releases/>
 
@@ -23,7 +23,7 @@
 
 1. Create the environment using the Terraform code provided. At the end of this step you should have an environment similar to the below
 
-![Globalenvironment] (https://github.com/FortinetSecDevOps/AzureMicroSeg/blob/main/images/environment.jpg)
+![Globalenvironment](images/environment.jpg)
 
 2. Deploy the Self-Managed cluster
 3. Configure The FortiGate K8S Connector
