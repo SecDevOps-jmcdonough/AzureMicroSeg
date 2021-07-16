@@ -2,15 +2,16 @@
 
 ## Workshop main objectives
 
-* Deploy Kubernetes Cluster
+* Deploy a Kubernetes Cluster
 * Deploy Azure Automation
-* Manage Micro Segmentation of Kubernetes Pods with FortiGate Automation Stitch
+* Micro Segmentation of Kubernetes Pods with FortiGate Automation Stitches
 
 ## Chapter 1 - Preparation Steps
 
-1. Ensure you have the following tools installed:
+1. Ensure you have the following tools available in your cloudshell:
 
     * An Azure account with a valid subscription
+    * An Azure Cloudshell
     * Azure CLI,  <https://docs.microsoft.com/en-us/cli/azure/install-azure-cli>
     * Terraform, <https://learn.hashicorp.com/tutorials/terraform/install-cli>
     * kubectl,  <https://kubernetes.io/docs/tasks/tools/>
@@ -18,9 +19,12 @@
 
 ## Chapter 2 - Create the environment
 
-1. Create the environment
-1. Deploy the Self-Managed cluster
-1. Configure The FortiGate K8S Connector
+1. Create the environment using the Terraform code provided. At the end of this step you should have an environment similar to the below
+
+![Global environment] (https://github.com/FortinetSecDevOps/AzureMicroSeg/images/environment.png)
+
+2. Deploy the Self-Managed cluster
+3. Configure The FortiGate K8S Connector
 
     * Create a ServiceAccount for the FortiGate
     * Create a clusterrole
@@ -33,7 +37,7 @@ You can extract the secret token using the following command
 kubectl get secret $(kubectl get serviceaccount fgt-svcaccount -o jsonpath='{range .secrets[*]}{.name}{"\n"}{end}' | grep token) -o go-template='{{.data.token | base64decode}}' && echo
 ```
 
-1. Questions
+4. Questions
 
 ## Chapter 3 - Create the RunBook and configure the FortiGate Automation Stitches
 
