@@ -53,12 +53,22 @@ This exercise covers the
 * Creation of FortiGate Automation Stitch Trigger
 * Creation of FortiGate Automation Stitch Action
 
+### Part 1. Azure
+
+Automation in Azure can be accomplished in a number of ways, Logic Apps, Function Apps, Runbooks, etc. Each of the automation methods can be triggered in a number of ways, Events, Webhooks, Schedules, etc.
+
+This part of the exercise goes through the process of creating an Azure Automation account that enables the running of an Azure Runbook via a Webhook. An Azure Runbook is just a PowerShell script that the Automation Account can run. The actions the Runbook can perform are controlled by the rights and scope (where those actions can be performed) that have been granted to the Automation Account.
+
+The Actions come are contained in the PowerShell Modules that have been imported into the Automation Account. The PowerShell Modules are libraries of commands called Cmdlets that are grouped into several domains. For example, Accounts, Automation, Compute, Network, and Resources.
+
+All of the steps can be performed in the Azure Portal. However the commands shown in each section can be run directly in Azure Cloudshell. Cloudshell has all the required utilities to execute the commands. Nothing additional needs to be loaded on a personal device
+
 1. Azure Automation Account
     * Create Automation Account
 
         ```PowerShell
         New-AzResourceGroup -Name automation-01 -Location eastus2
-        New-AzAutomationAccount -ResourceGroupName automation-01 -Location eastus2 -Name user-automation-01  -AssignSystemIdentity -Plan Basic
+        New-AzAutomationAccount -ResourceGroupName automation-01 -Location eastus2 -Name user-automation-01 -AssignSystemIdentity -Plan Basic
         ```
 
     * Setup Automation Account [Managed Identity] (<https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview>)
@@ -79,7 +89,7 @@ This exercise covers the
         @("Automation","Compute","Network","Resources") | ForEach-Object {Import-AzAutomationModule -ResourceGroupName automation-01 -AutomationAccountName user-automation-01 -Name Az.$_  -ContentLinkUri https://www.powershellgallery.com/api/v2/package/Az.$_}
         ```
 
-2. Azure Automation Runbook
+1. Azure Automation Runbook
     * Create, Import, and Publish Runbook
 
         ```PowerShell
@@ -112,10 +122,12 @@ This exercise covers the
         HybridWorker          :
         ```
 
-3. FortiGate Dynamic Address
+### Part 2. FortiGate
+
+1. FortiGate Dynamic Address
     * Create Dynamic Address
         * Filter
-4. FortiGate Automation Stitch
+1. FortiGate Automation Stitch
     * Trigger
         * Log Address Added
         * Log Address Removed
@@ -127,4 +139,4 @@ This exercise covers the
         * Trigger
         * Action
 
-5. Questions
+1. Questions
