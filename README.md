@@ -6,7 +6,7 @@
 * Deploy Azure Automation
 * Micro Segmentation of Kubernetes Pods with FortiGate Automation Stitches
 
-## Chapter 1 - Preparation Steps
+## Chapter 1 - Preparation Steps [estimated duration 5min]
 
 1. Ensure you have the following tools available in your cloudshell:
 
@@ -19,14 +19,29 @@
 
     * download aks-engine v0.65.0, <https://github.com/Azure/aks-engine/releases/>
 
-## Chapter 2 - Create the environment
+```
+wget https://github.com/Azure/aks-engine/releases/download/v0.64.0/aks-engine-v0.64.0-linux-amd64.zip
+unzip aks-engine-v0.64.0-linux-amd64.zip
+mv aks-engine-v0.64.0-linux-amd64/aks-engine ./
+chmod +x aks-engine 
+```    
+
+## Chapter 2 - Create the environment [estimated duration 20min]
 
 1. Create the environment using the Terraform code provided. At the end of this step you should have an environment similar to the below
 
 ![Globalenvironment](images/environment.jpg)
 
-2. Deploy the Self-Managed cluster
-3. Configure The FortiGate K8S Connector
+2. Deploy the Self-Managed cluster using aks-engine. Customize the deployment file to your own environment
+```
+./aks-engine deploy --resource-group k8s-microseg --location eastus --api-model ./aks-calico-azure.json
+```
+
+3. Verify that the deployment is successful by listing the K8S nodes
+
+![clone](images/k8s-nodes.jpg)
+
+4. Configure The FortiGate K8S Connector and verify that it's UP
 
     * Create a ServiceAccount for the FortiGate
     * Create a clusterrole
@@ -35,8 +50,8 @@
 
 You can extract the secret token using the following command
 
-```bash
-kubectl get secret $(kubectl get serviceaccount fgt-svcaccount -o jsonpath='{range .secrets[*]}{.name}{"\n"}{end}' | grep token) -o go-template='{{.data.token | base64decode}}' && echo
+```
+kubectl get secrets -o jsonpath="{.items[?(@.metadata.annotations['kubernetes\.io/service-account\.name']=='fgt-svcaccount')].data.token}"| base64 --decode
 ```
 
 4. Questions
