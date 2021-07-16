@@ -15,8 +15,7 @@ end
 config system global
 set hostname ${fgt_id}
 set admintimeout 120
-set timezone 57
-set gui-theme mariner
+set timezone 12
 end
 
 config system interface
@@ -33,6 +32,27 @@ set ip ${Port2IP}/${private_subnet_mask}
 set allowaccess ping https ssh fgfm
 next
 end
+config firewall address
+    edit "K8S_Nodes"
+        set type dynamic
+        set sdn "AzureSDN"
+        set filter "Subnet=k8s-microseg-subnet-k8s_master | Subnet=k8s-microseg-subnet-K8s_nodes"
+    next
+end
+config firewall policy
+    edit 0
+        set name "ToOutside"
+        set srcintf "port2"
+        set dstintf "port1"
+        set srcaddr "K8S_Nodes"
+        set dstaddr "all"
+        set action accept
+        set schedule "always"
+        set service "ALL"
+        set logtraffic all
+        set nat enable
+    next
+end
 
 config system vdom-exception
 edit 0
@@ -42,7 +62,6 @@ edit 0
 set object firewall.ippool
 next
 end
-
 config router static
     edit 0
         set gateway ${fgt_external_gw}
