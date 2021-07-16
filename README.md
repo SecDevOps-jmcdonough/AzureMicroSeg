@@ -43,7 +43,7 @@ chmod +x aks-engine
 
 At the end of this step you should have the following setup
 
-![Globalenvironment2](images/environment_chapter2)
+![Globalenvironment2](images/environment_chapter2.jpg)
 
 4. Configure The FortiGate K8S Connector and verify that it's UP
 
