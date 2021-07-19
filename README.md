@@ -179,13 +179,68 @@ This exercise covers the
 
 5. FortiGate Automation Stitch
 
-6. Delete the DB and Web pods to force their replacement. Check if the FGT detects an address change and triggers the automation Stich. You can use the commands 
- **diagnose debug  application autod -1** to debug the stich.
+6. Delete the DB and Web pods to force their replacement. Check if the FGT detects an address change and triggers the automation Stich. 
+You can use the commands **diagnose debug  application autod -1** to debug the stich.
 
 ![podsaddressroute](images/k8s-pods-routeadded.jpg)
+
+7. Access the web POD, install curl and try to connect to the DB Pod from the web POD. Example below (replace with your own POD name and ip address)
+
+```
+kubectl get pods -o wide
+kubectl exec --tty --stdin web-deployment-66bf8c979c-ql2kn -- /bin/bash
+apt-get update
+apt-get install curl
+while true; do curl -v http://10.33.3.29:8080; sleep 2; done;
+```
+
+![podsaddresscurl](images/k8s-pods-curl.jpg)
 
 **************
 
 8. Questions
+   
+    * Is this setup secure? How is the runbook able to update the UDR without any authentication ?
+    * There is no policy that allows traffic between Web-pod and DB-pod on the FGT. Why is it allowed?  
 
 **************
+
+
+## Chapter 4 - Scale the deployment and taint the nodes [estimated duration 10min]
+
+1. Scale the K8S cluster to two nodes
+
+    ```
+    ./aks-engine scale --resource-group k8s-microseg --api-model /home/mounira/_output/k8smicroseg/apimodel.json  --new-node-count 2 --node-pool nodepool1 --apiserver  k8smicroseg.eastus.cloudapp.azure.com --location eastus
+    ```
+
+![podsaddresscurl](images/scaledeployment.jpg)
+
+2. Taint one node to receive Web pods only and the other one to receive DB pods (update with your own Node names)
+
+    ```
+    kubectl taint nodes k8s-nodepool1-20146942-0 app=web:NoSchedule
+    kubectl taint nodes k8s-nodepool1-20146942-1 app=db:NoSchedule
+    ```
+
+3. Delete the previous deployments and create new ones with taint tolerations. You can use the provided example **web-db-deployment-tolerations.yaml**
+
+    ```
+    kubectl delete deployment db-deployment
+    kubectl delete deployment web-deployment
+    kubectl apply -f web-db-deployment-tolerations.yaml
+    ```
+
+    * Verify that the two pods are deployed in two diffrent nodes. use the command **kubectl get pods -o wide**
+    * Verify that the the route table has been updated accordingly 
+
+4. Access the web POD, install curl and try to connect to the DB Pod from the web POD. 
+
+**************
+5. Questions
+   
+    * What is your conclusion(s) ?
+ 
+ **************
+
+ ## Chapter 5 [Optional] - Use Calico policy to control traffic inside the cluster
