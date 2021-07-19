@@ -239,8 +239,8 @@ while true; do curl -v http://10.33.3.29:8080; sleep 2; done;
 **************
 5. Questions
    
-    * What is your conclusion(s) ?
+    * What is your conclusion ?
  
  **************
 
- ## Chapter 5 [Optional] - Use Calico policy to control traffic inside the cluster
+ ## Chapter 5 [Optional] - Calico policy to control traffic inside the cluster
