@@ -39,7 +39,11 @@
     
     ```
 
-3. Verify that the deployment is successful by listing the K8S nodes
+3. Verify that the deployment is successful by listing the K8S nodes. To access your cluster, transfer the kubeconfig file generated at the previous step to your kubeconfig directory
+
+    ```
+    cp  _output/k8smicroseg/kubeconfig/kubeconfig.eastus.json /home/mounira/.kube/config
+    ```
 
 ![clone](images/k8s-nodes.jpg)
 
@@ -53,16 +57,21 @@ At the end of this step you should have the following setup
     * Create a clusterrole
     * Create a clusterrolebinding
     * Extract the ServiceAccount secret token and configure the FortiGate
-
-You can extract the secret token using the following command
+    
+    You can extract the secret token using the following command
 
     ```
     kubectl get secrets -o jsonpath="{.items[?(@.metadata.annotations['kubernetes\.io/service-account\.name']=='fgt-svcaccount')].data.token}"| base64 --decode
     ```
 
+5. Deploy two pods, one tagged with the label app=web and the other with the label app=db. You can use the provided example web-db-deployment.yaml
+
+![pods](images/k8s-pods.jpg)
+
+
 **************
 
-5. Questions
+6. Questions
 
     * Why the aks-engine deployment created Load balancers?
     * Why a UDP/1123 load balacing rule has been created on the Master LB?    
@@ -71,7 +80,7 @@ You can extract the secret token using the following command
 
 **************
 
-## Chapter 3 - Create the RunBook and configure the FortiGate Automation Stitches
+## Chapter 3 - Create the RunBook and configure the FortiGate Automation Stitches [estimated duration 30min]
 
 A FortiGate Automation Stitch brings together a trigger and an action. In this exercise the trigger is a log event and the action is the execution of a webhook.
 
@@ -150,8 +159,11 @@ This exercise covers the
         ```
 
 3. FortiGate Dynamic Address
-    * Create Dynamic Address
-        * Filter
+    * Create Dynamic Address to match a Web pod
+        ![podsaddress](images/k8s-pods-address.jpg)
+
+    * Repeat the same for the DB pod 
+
 4. FortiGate Automation Stitch
     * Trigger
         * Log Address Added
@@ -164,4 +176,16 @@ This exercise covers the
         * Trigger
         * Action
 
-5. Questions
+
+5. FortiGate Automation Stitch
+
+6. Delete the DB and Web pods to force their replacement. Check if the FGT detects an address change and triggers the automation Stich. You can use the commands 
+ **diagnose debug  application autod -1** to debug the stich.
+
+![podsaddressroute](images/k8s-pods-routeadded.jpg)
+
+**************
+
+8. Questions
+
+**************
