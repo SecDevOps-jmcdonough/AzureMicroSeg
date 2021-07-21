@@ -137,11 +137,12 @@ data "template_file" "dut1_customdata" {
     Port1IP             = element ( values(var.dut1)[*].ip , 0)
     Port2IP             = element ( values(var.dut1)[*].ip , 1)
 
-    public_subnet_mask  = cidrnetmask( element(element( [for subnet in azurerm_subnet.vnetsubnets: subnet.address_prefixes],0),0) )
-    private_subnet_mask = cidrnetmask( element(element( [for subnet in azurerm_subnet.vnetsubnets: subnet.address_prefixes],1),0) )
+    public_subnet_mask  = cidrnetmask( var.vnetsubnets["fgt_public"]["cidr"] )
+    private_subnet_mask = cidrnetmask( var.vnetsubnets["fgt_private"]["cidr"] )
 
-    fgt_external_gw     = cidrhost(element( values(var.vnetsubnets)[*].cidr, 0), 1)
-    fgt_internal_gw     = cidrhost(element(element( [for subnet in azurerm_subnet.vnetsubnets: subnet.address_prefixes],1),0), 1)
+    fgt_external_gw     = cidrhost(var.vnetsubnets["fgt_public"]["cidr"], 1) 
+    fgt_internal_gw     = cidrhost(var.vnetsubnets["fgt_private"]["cidr"], 1) 
+
     vnet_network        = var.vnetcidr[0]  
 
   }

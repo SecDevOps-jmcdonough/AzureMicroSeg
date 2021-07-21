@@ -2,40 +2,83 @@
 
 ## Workshop main objectives
 
-* Deploy Kubernetes Cluster
+* Deploy a Kubernetes Cluster
 * Deploy Azure Automation
-* Manage Micro Segmentation of Kubernetes Pods with FortiGate Automation Stitch
+* Micro Segmentation of Kubernetes Pods with FortiGate Automation Stitches
 
-## Chapter 1 - Preparation Steps
+## Chapter 1 - Preparation Steps [estimated duration 5min]
 
-1. Ensure you have the following tools installed:
+1. Ensure you have the following tools available in your cloudshell:
 
     * An Azure account with a valid subscription
-    * Azure CLI,  <https://docs.microsoft.com/en-us/cli/azure/install-azure-cli>
-    * Terraform, <https://learn.hashicorp.com/tutorials/terraform/install-cli>
-    * kubectl,  <https://kubernetes.io/docs/tasks/tools/>
-    * aks-engine v0.65.0, <https://github.com/Azure/aks-engine/releases/>
+    * An Azure Cloudshell
 
-## Chapter 2 - Create the environment
+    * Clone the repository in your cloud shell
 
-1. Create the environment
-1. Deploy the Self-Managed cluster
-1. Configure The FortiGate K8S Connector
+        ![clone](images/git_clone.jpg)
+
+    * download aks-engine and transfer the binary to your home directory
+
+        ```bash
+        wget https://github.com/Azure/aks-engine/releases/download/v0.64.0/aks-engine-v0.64.0-linux-amd64.zip
+        unzip aks-engine-v0.64.0-linux-amd64.zip
+        mv aks-engine-v0.64.0-linux-amd64/aks-engine ./
+        chmod +x aks-engine 
+        ```
+
+## Chapter 2 - Create the environment [estimated duration 20min]
+
+1. Create the environment using the Terraform code provided. At the end of this step you should have an environment similar to the below
+
+![Globalenvironment](images/environment.jpg)
+
+1. Deploy the Self-Managed cluster using aks-engine. Customize the deployment file to your own environment
+
+    ```bash
+    ./aks-engine deploy --resource-group k8s-microseg --location eastus --api-model ./AzureMicroSeg/K8S/aks-calico-azure.json
+    ```
+
+1. Verify that the deployment is successful by listing the K8S nodes. To access your cluster, transfer the kubeconfig file generated at the previous step to your kubeconfig directory
+
+    ```bash
+    cp  _output/k8smicroseg/kubeconfig/kubeconfig.eastus.json /home/mounira/.kube/config
+    ```
+
+![clone](images/k8s-nodes.jpg)
+
+At the end of this step you should have the following setup
+
+![Globalenvironment2](images/environment_chapter2.jpg)
+
+1. Configure The FortiGate K8S Connector and verify that it's UP
 
     * Create a ServiceAccount for the FortiGate
     * Create a clusterrole
     * Create a clusterrolebinding
     * Extract the ServiceAccount secret token and configure the FortiGate
 
-You can extract the secret token using the following command
+    You can extract the secret token using the following command
 
-```bash
-kubectl get secret $(kubectl get serviceaccount fgt-svcaccount -o jsonpath='{range .secrets[*]}{.name}{"\n"}{end}' | grep token) -o go-template='{{.data.token | base64decode}}' && echo
-```
+    ```bash
+    kubectl get secrets -o jsonpath="{.items[?(@.metadata.annotations['kubernetes\.io/service-account\.name']=='fgt-svcaccount')].data.token}"| base64 --decode
+    ```
+
+1. Deploy two pods, one tagged with the label app=web and the other with the label app=db. You can use the provided example web-db-deployment.yaml
+
+![pods](images/k8s-pods.jpg)
+
+**************
 
 1. Questions
 
-## Chapter 3 - Create the RunBook and configure the FortiGate Automation Stitches
+    * Why the aks-engine deployment created Load balancers?
+    * Why a UDP/1123 load balancing rule has been created on the Master LB?
+    * How many PODs can the deployed Node accommodate?
+    * If we want to make the communication to the MasterNode go through the FortiGate, what are the changes required ?
+
+**************
+
+## Chapter 3 - Create the RunBook and configure the FortiGate Automation Stitches [estimated duration 30min]
 
 A FortiGate Automation Stitch brings together a trigger and an action. In this exercise the trigger is a log event and the action is the execution of a webhook.
 
@@ -67,14 +110,13 @@ All of the steps can be performed in the Azure Portal. However the commands show
     * Create Automation Account
 
         ```PowerShell
-        New-AzResourceGroup -Name automation-01 -Location eastus2
-        New-AzAutomationAccount -ResourceGroupName automation-01 -Location eastus2 -Name user-automation-01 -AssignSystemIdentity -Plan Basic
+        New-AzAutomationAccount -ResourceGroupName k8s-microseg -Location eastus -Name user-automation-01  -AssignSystemIdentity -Plan Basic
         ```
 
     * Setup Automation Account [Managed Identity] (<https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview>)
 
         ```PowerShell
-        New-AzRoleAssignment -ObjectId (Get-AzAutomationAccount -ResourceGroupName automation-01 -Name user-automation-01).Identity.PrincipalId -RoleDefinitionName "Contributor"
+        New-AzRoleAssignment -ObjectId (Get-AzAutomationAccount -ResourceGroupName k8s-microseg -Name user-automation-01).Identity.PrincipalId -RoleDefinitionName "Contributor" -Scope (Get-AzResourceGroup -Name k8s-microseg -Location eastus).ResourceId
         ```
 
     * Import Az PowerShell Modules
@@ -85,23 +127,25 @@ All of the steps can be performed in the Azure Portal. However the commands show
         * Az.Resources
 
         ```PowerShell
-        Import-AzAutomationModule -ResourceGroupName automation-01 -AutomationAccountName user-automation-01 -Name Az.Accounts  -ContentLinkUri https://www.powershellgallery.com/api/v2/package/Az.Accounts
-        @("Automation","Compute","Network","Resources") | ForEach-Object {Import-AzAutomationModule -ResourceGroupName automation-01 -AutomationAccountName user-automation-01 -Name Az.$_  -ContentLinkUri https://www.powershellgallery.com/api/v2/package/Az.$_}
+        Import-AzAutomationModule -ResourceGroupName k8s-microseg -AutomationAccountName user-automation-01 -Name Az.Accounts  -ContentLinkUri https://www.powershellgallery.com/api/v2/package/Az.Accounts
+        @("Automation","Compute","Network","Resources") | ForEach-Object {Import-AzAutomationModule -ResourceGroupName k8s-microseg -AutomationAccountName user-automation-01 -Name Az.$_  -ContentLinkUri https://www.powershellgallery.com/api/v2/package/Az.$_}
         ```
 
 1. Azure Automation Runbook
     * Create, Import, and Publish Runbook
 
         ```PowerShell
-        New-AzAutomationRunbook -ResourceGroupName automation-01 -AutomationAccountName user-automation-01 -Name ManageDynamicAddressRoutes -Type PowerShell
-        Import-AzAutomationRunbook -Name ManageDynamicAddressRoutes -ResourceGroupName automation-01 -AutomationAccountName user-automation-01 -Path .\ManageDynamicAddressRoutes.ps1 -Type PowerShell –Force
-        Publish-AzAutomationRunbook -ResourceGroupName automation-01 -AutomationAccountName user-automation-01 -Name ManageDynamicAddressRoutes
+        New-AzAutomationRunbook -ResourceGroupName k8s-microseg -AutomationAccountName user-automation-01 -Name ManageDynamicAddressRoutes -Type PowerShell
+        
+        Import-AzAutomationRunbook -Name ManageDynamicAddressRoutes -ResourceGroupName k8s-microseg -AutomationAccountName user-automation-01 -Path ./AzureMicroSeg/Azure/ManageDynamicAddressRoutes.ps1 -Type PowerShell –Force
+        
+        Publish-AzAutomationRunbook -ResourceGroupName k8s-microseg -AutomationAccountName user-automation-01 -Name ManageDynamicAddressRoutes
         ```
 
     * Create Webhook
 
         ```PowerShell
-        New-AzAutomationWebhook -ResourceGroupName automation-01 -AutomationAccountName user-automation-01 -RunbookName ManageDynamicAddressRoutes -Name routetableupdate -IsEnabled $True -ExpiryTime "07/12/2022" -Force
+        New-AzAutomationWebhook -ResourceGroupName k8s-microseg -AutomationAccountName user-automation-01 -RunbookName ManageDynamicAddressRoutes -Name routetableupdate -IsEnabled $True -ExpiryTime "07/12/2022" -Force
         ```
 
         The output will include the URL of the enabled webhook. The webhook is only viewable at creation and cannot be retrieved afterwards. The output will look similar to below.
@@ -122,12 +166,12 @@ All of the steps can be performed in the Azure Portal. However the commands show
         HybridWorker          :
         ```
 
-### Part 2. FortiGate
-
 1. FortiGate Dynamic Address
-    * Create Dynamic Address
-        * Filter
-1. FortiGate Automation Stitch
+    * Create Dynamic Address to match a Web pod
+        ![podsaddress](images/k8s-pods-address.jpg)
+
+    * Repeat the same for the DB pod
+
     * Trigger
         * Log Address Added
         * Log Address Removed
@@ -139,4 +183,70 @@ All of the steps can be performed in the Azure Portal. However the commands show
         * Trigger
         * Action
 
+1. FortiGate Automation Stitch
+
+1. Delete the DB and Web pods to force their replacement. Check if the FGT detects an address change and triggers the automation Stich.
+You can use the commands **diagnose debug  application autod -1** to debug the stich.
+
+![podsaddressroute](images/k8s-pods-routeadded.jpg)
+
+1. Access the web POD, install curl and try to connect to the DB Pod from the web POD. Example below (replace with your own POD name and ip address)
+
+```bash
+kubectl get pods -o wide
+kubectl exec --tty --stdin web-deployment-66bf8c979c-ql2kn -- /bin/bash
+apt-get update
+apt-get install curl
+while true; do curl -v http://10.33.3.29:8080; sleep 2; done;
+```
+
+![podsaddresscurl](images/k8s-pods-curl.jpg)
+
+**************
+
 1. Questions
+
+    * Is this setup secure? How is the runbook able to update the UDR without any authentication ?
+    * There is no policy that allows traffic between Web-pod and DB-pod on the FGT. Why is it allowed?  
+
+**************
+
+## Chapter 4 - Scale the deployment and taint the nodes [estimated duration 10min]
+
+1. Scale the K8S cluster to two nodes
+
+    ```bash
+    ./aks-engine scale --resource-group k8s-microseg --api-model /home/mounira/_output/k8smicroseg/apimodel.json  --new-node-count 2 --node-pool nodepool1 --apiserver  k8smicroseg.eastus.cloudapp.azure.com --location eastus
+    ```
+
+![podsaddresscurl](images/scaledeployment.jpg)
+
+1. Taint one node to receive Web pods only and the other one to receive DB pods (update with your own Node names)
+
+    ```bash
+    kubectl taint nodes k8s-nodepool1-20146942-0 app=web:NoSchedule
+    kubectl taint nodes k8s-nodepool1-20146942-1 app=db:NoSchedule
+    ```
+
+1. Delete the previous deployments and create new ones with taint tolerations. You can use the provided example **web-db-deployment-tolerations.yaml**
+
+    ```bash
+    kubectl delete deployment db-deployment
+    kubectl delete deployment web-deployment
+    kubectl apply -f web-db-deployment-tolerations.yaml
+    ```
+
+    * Verify that the two pods are deployed in two different nodes. use the command **kubectl get pods -o wide**
+    * Verify that the the route table has been updated accordingly
+
+1. Access the web POD, install curl and try to connect to the DB Pod from the web POD.
+
+**************
+
+1. Questions
+
+    * What is your conclusion ?
+
+ **************
+
+## Chapter 5 [Optional] - Calico policy to control traffic inside the cluster
