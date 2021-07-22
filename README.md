@@ -10,8 +10,12 @@
 
 1. Ensure you have the following tools available in your cloudshell:
 
-    * An Azure account with a valid subscription
-    * An Azure Cloudshell
+    * Azure account with a valid subscription
+    * Azure Cloudshell
+    * Azure CLI,  <https://docs.microsoft.com/en-us/cli/azure/install-azure-cli>
+    * Terraform, <https://learn.hashicorp.com/tutorials/terraform/install-cli>
+    * kubectl,  <https://kubernetes.io/docs/tasks/tools/>
+    * aks-engine v0.65.0, <https://github.com/Azure/aks-engine/releases/>
 
     * Clone the repository in your cloud shell
 
@@ -104,13 +108,20 @@ This part of the exercise goes through the process of creating an Azure Automati
 
 The Actions come are contained in the PowerShell Modules that have been imported into the Automation Account. The PowerShell Modules are libraries of commands called Cmdlets that are grouped into several domains. For example, Accounts, Automation, Compute, Network, and Resources.
 
-All of the steps can be performed in the Azure Portal. However the commands shown in each section can be run directly in Azure Cloudshell. Cloudshell has all the required utilities to execute the commands. Nothing additional needs to be loaded on a personal device
+All of the steps can be performed in the Azure Portal. However the commands shown in each section can be run directly in Azure Cloudshell. Cloudshell has all the required utilities to execute the commands. Nothing additional needs to be loaded on a personal device.
 
 1. Azure Automation Account
-    * Create Automation Account
+    * Create Automation Account [Automation Account](https://docs.microsoft.com/en-us/azure/automation/automation-create-standalone-account)
+
+        1. Create a new Resource Group
+        1. Create an Automation Account in the new Resource Group
+            * Choose a Location
+            * Provide a Name
+            * Choose the Basic Plan
+            * Indicate the assignment of a System Assigned Identity </br></br>
 
         ```PowerShell
-        New-AzAutomationAccount -ResourceGroupName k8s-microseg -Location eastus -Name user-automation-01  -AssignSystemIdentity -Plan Basic
+        New-AzAutomationAccount -ResourceGroupName k8s-microseg -Location eastus -Name user-automation-01 -AssignSystemIdentity -Plan Basic
         ```
 
     * Setup Automation Account [Managed Identity] (<https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview>)
