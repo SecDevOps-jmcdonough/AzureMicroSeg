@@ -1,30 +1,30 @@
 variable "TAG" {
-    description = "Customer or personal Prefix TAG of the created ressources"
-    type= string
-} 
-
-variable "project" {
-    description = "project Prefix TAG of the created ressources"
-    type= string
+  description = "Customer or personal Prefix TAG of the created ressources"
+  type        = string
 }
 
-variable "azsubscriptionid"{
-description = "Azure Subscription id"
+variable "project" {
+  description = "project Prefix TAG of the created ressources"
+  type        = string
+}
+
+variable "azsubscriptionid" {
+  description = "Azure Subscription id"
 }
 
 //----------------VNET-----------
 
 variable "vnetloc" {
-    description = "Deployment Location"
+  description = "Deployment Location"
 
 }
 variable "vnetcidr" {
-    description = "VNET CIDRs"
-    type = list(string)
+  description = "VNET CIDRs"
+  type        = list(string)
 
 }
 variable "vnetsubnets" {
-    description = "VNET Subnets names and CIDRs"
+  description = "VNET Subnets names and CIDRs"
 }
 
 //--------------------------------
@@ -42,7 +42,7 @@ variable "FGT_OFFER" {
 }
 
 variable "dut1" {
-    description = "FGT1 Nics and IP"
+  description = "FGT1 Nics and IP"
 }
 
 //------------------------------
