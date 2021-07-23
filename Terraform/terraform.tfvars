@@ -1,6 +1,6 @@
-azsubscriptionid = "cc0d730a-9395-4c66-8a74-efdfc1b05670" // APAC-CSE
+azsubscriptionid = "fd5b7afe-28d8-4713-9892-c235918d8ecf" // Cloud CSE
 
-project = "microseg"
+project = "jmcdonough01-microseg"
 TAG     = "k8s"
 
 vnetloc  = "eastus"
@@ -12,6 +12,12 @@ vnetsubnets = {
   "fgt_private" = { name = "fgt_private", cidr = "10.33.1.0/24" },
   "k8s_master"  = { name = "k8s_master", cidr = "10.33.2.0/24" },
   "K8s_nodes"   = { name = "K8s_nodes", cidr = "10.33.3.0/24" },
+}
+
+vnetroutetables = {
+  "fgt_public"  = { name = "fgt-pub_rt" },
+  "fgt_private" = { name = "fgt-priv_rt" },
+  "K8s_nodes"   = { name = "k8s_nodes_rt" },
 }
 
 

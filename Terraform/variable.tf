@@ -27,6 +27,10 @@ variable "vnetsubnets" {
   description = "VNET Subnets names and CIDRs"
 }
 
+variable "vnetroutetables" {
+  description = "VNET Route Table names"
+}
+
 //--------------------------------
 variable "dut_vmsize" {
   description = "FortiGate VM size"
