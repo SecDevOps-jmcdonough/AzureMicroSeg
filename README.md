@@ -19,6 +19,8 @@
 
     * Clone the repository in your cloud shell
 
+        `git clone https://github.com/fortinetsecdevops/AzureMicroSeg`
+
         ![clone](images/git_clone.jpg)
 
     * download aks-engine and transfer the binary to your home directory
@@ -34,7 +36,7 @@
 
 1. Create the environment using the Terraform code provided. At the end of this step you should have an environment similar to the below
 
-![Globalenvironment](images/environment.jpg)
+    ![Globalenvironment](images/environment.jpg)
 
 1. Deploy the Self-Managed cluster using aks-engine. Customize the deployment file to your own environment
 
@@ -48,11 +50,11 @@
     cp  _output/k8smicroseg/kubeconfig/kubeconfig.eastus.json /home/mounira/.kube/config
     ```
 
-![clone](images/k8s-nodes.jpg)
+    ![clone](images/k8s-nodes.jpg)
 
-At the end of this step you should have the following setup
+    At the end of this step you should have the following setup
 
-![Globalenvironment2](images/environment_chapter2.jpg)
+    ![Globalenvironment2](images/environment_chapter2.jpg)
 
 1. Configure The FortiGate K8S Connector and verify that it's UP
 
@@ -69,7 +71,7 @@ At the end of this step you should have the following setup
 
 1. Deploy two pods, one tagged with the label app=web and the other with the label app=db. You can use the provided example web-db-deployment.yaml
 
-![pods](images/k8s-pods.jpg)
+    ![pods](images/k8s-pods.jpg)
 
 **************
 
@@ -108,12 +110,17 @@ This part of the exercise goes through the process of creating an Azure Automati
 
 The Actions come are contained in the PowerShell Modules that have been imported into the Automation Account. The PowerShell Modules are libraries of commands called Cmdlets that are grouped into several domains. For example, Accounts, Automation, Compute, Network, and Resources.
 
-All of the steps can be performed in the Azure Portal. However the commands shown in each section can be run directly in Azure Cloudshell. Cloudshell has all the required utilities to execute the commands. Nothing additional needs to be loaded on a personal device.
+All of the steps can be performed in the Azure Portal. However, the commands shown in each section can be run directly in Azure Cloudshell. Cloudshell has all the required utilities to execute the commands. Nothing additional needs to be loaded on a personal device.
 
 1. Azure Automation Account
     * Create Automation Account [Automation Account](https://docs.microsoft.com/en-us/azure/automation/automation-create-standalone-account)
 
         1. Create a new Resource Group
+
+        ```PowerShell
+        New-AzResourceGroup -Name k8s-microseg -Location eastus
+        ```
+
         1. Create an Automation Account in the new Resource Group
             * Choose a Location
             * Provide a Name
@@ -183,35 +190,37 @@ All of the steps can be performed in the Azure Portal. However the commands show
 
     * Repeat the same for the DB pod
 
-    * Trigger
+1. FortiGate Automation Stitch
+    * Create [Trigger](./FortiGate/routetableupdate-trigger.cfg)
         * Log Address Added
         * Log Address Removed
-    * Action
+        ![FortiGate Automation Stitch Trigger](images/fgt-automation-stitch-trigger.jpg)
+    * Create [Action](./FortiGate/routetableupdate-action.cfg)
         * Webhook
         * Body
         * Headers
-    * Stitch
+        ![FortiGate Automation Stitch Action](images/fgt-automation-stitch-action.jpg)
+    * Create [Stitch](./FortiGate/routetableupdate-stitch.cfg)
         * Trigger
         * Action
-
-1. FortiGate Automation Stitch
+        ![FortiGate Automation Stitch Action](images/fgt-automation-stitch-stitch.jpg)
 
 1. Delete the DB and Web pods to force their replacement. Check if the FGT detects an address change and triggers the automation Stich.
 You can use the commands **diagnose debug  application autod -1** to debug the stich.
 
-![podsaddressroute](images/k8s-pods-routeadded.jpg)
+    ![podsaddressroute](images/k8s-pods-routeadded.jpg)
 
 1. Access the web POD, install curl and try to connect to the DB Pod from the web POD. Example below (replace with your own POD name and ip address)
 
-```bash
-kubectl get pods -o wide
-kubectl exec --tty --stdin web-deployment-66bf8c979c-ql2kn -- /bin/bash
-apt-get update
-apt-get install curl
-while true; do curl -v http://10.33.3.29:8080; sleep 2; done;
-```
+    ```bash
+    kubectl get pods -o wide
+    kubectl exec --tty --stdin web-deployment-66bf8c979c-ql2kn -- /bin/bash
+    apt-get update
+    apt-get install curl
+    while true; do curl -v http://10.33.3.29:8080; sleep 2; done;
+    ```
 
-![podsaddresscurl](images/k8s-pods-curl.jpg)
+    ![podsaddresscurl](images/k8s-pods-curl.jpg)
 
 **************
 
@@ -230,7 +239,7 @@ while true; do curl -v http://10.33.3.29:8080; sleep 2; done;
     ./aks-engine scale --resource-group k8s-microseg --api-model /home/mounira/_output/k8smicroseg/apimodel.json  --new-node-count 2 --node-pool nodepool1 --apiserver  k8smicroseg.eastus.cloudapp.azure.com --location eastus
     ```
 
-![podsaddresscurl](images/scaledeployment.jpg)
+    [podsaddresscurl](images/scaledeployment.jpg)
 
 1. Taint one node to receive Web pods only and the other one to receive DB pods (update with your own Node names)
 
