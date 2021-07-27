@@ -1,17 +1,20 @@
-//############################ Create Resource Group ##################
+//############################ Resource Group ############################
 
-resource "azurerm_resource_group" "RG" {
+resource "azurerm_resource_group" "rg" {
   name     = "${var.TAG}-${var.project}"
   location = var.vnetloc
+
+  tags = {
+    Project = "${var.project}"
+  }
 }
 
+//############################ Create VNET  ############################
 
-//############################ Create VNETs  ##################
-
-resource "azurerm_virtual_network" "vnetperftest" {
+resource "azurerm_virtual_network" "vnet" {
   name                = "${var.TAG}-${var.project}-vnet-${var.vnetloc}"
-  location            = var.vnetloc
-  resource_group_name = azurerm_resource_group.RG.name
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
   address_space       = var.vnetcidr
 
   tags = {
@@ -19,109 +22,53 @@ resource "azurerm_virtual_network" "vnetperftest" {
   }
 }
 
-//############################ Create VNET Subnets ##################
+//############################ Create VNET Subnets ############################
 
-resource "azurerm_subnet" "vnetsubnets" {
+resource "azurerm_subnet" "subnets" {
   for_each = var.vnetsubnets
 
   name                 = "${var.TAG}-${var.project}-subnet-${each.value.name}"
-  resource_group_name  = azurerm_resource_group.RG.name
+  resource_group_name  = azurerm_resource_group.rg.name
   address_prefixes     = [each.value.cidr]
-  virtual_network_name = azurerm_virtual_network.vnetperftest.name
+  virtual_network_name = azurerm_virtual_network.vnet.name
 
 }
 
+//############################  Route Tables ############################
+resource "azurerm_route_table" "vnet_route_tables" {
+  for_each = var.vnetroutetables
 
-//############################ Create RTB Hub1 ##################
-resource "azurerm_route_table" "vnet_fgt_pub_RTB" {
-  name                = "${var.TAG}-${var.project}-fgt-pub_RTB"
-  location            = var.vnetloc
-  resource_group_name = azurerm_resource_group.RG.name
+  name                = "${var.TAG}-${var.project}-${each.value.name}"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
   //disable_bgp_route_propagation = false
   tags = {
     Project = "${var.project}"
   }
 }
 
-data "azurerm_subnet" "pub_subnet" {
-  name                 = "${var.TAG}-${var.project}-subnet-${var.vnetsubnets["fgt_public"]["name"]}"
-  virtual_network_name = azurerm_virtual_network.vnetperftest.name
-  resource_group_name  = azurerm_resource_group.RG.name
+//############################  RT Associations ############################
+resource "azurerm_subnet_route_table_association" "vnet_rt_assoc" {
+  for_each = var.vnetroutetables
 
-  depends_on = [
-    azurerm_subnet.vnetsubnets
-  ]
+  subnet_id = azurerm_subnet.subnets[each.key].id
+  #subnet_id      = data.azurerm_subnet.pub_subnet.id
+  route_table_id = azurerm_route_table.vnet_route_tables[each.key].id
 }
 
-resource "azurerm_subnet_route_table_association" "vnet_pub_RTB_assoc" {
-  subnet_id      = data.azurerm_subnet.pub_subnet.id
-  route_table_id = azurerm_route_table.vnet_fgt_pub_RTB.id
-}
-
-resource "azurerm_route" "vnet_fgt_pub_RTB_default" {
+//############################  RT Default Routes ############################
+resource "azurerm_route" "vnet_fgt_pub_rt_default" {
   name                = "defaultInternet"
-  resource_group_name = azurerm_resource_group.RG.name
-  route_table_name    = azurerm_route_table.vnet_fgt_pub_RTB.name
+  resource_group_name = azurerm_resource_group.rg.name
+  route_table_name    = azurerm_route_table.vnet_route_tables["fgt_public"].name
   address_prefix      = "0.0.0.0/0"
   next_hop_type       = "Internet"
 }
 
-///////////////// Priv
-resource "azurerm_route_table" "vnet_fgt_priv_RTB" {
-  name                = "${var.TAG}-${var.project}-fgt-priv_RTB"
-  location            = var.vnetloc
-  resource_group_name = azurerm_resource_group.RG.name
-  //disable_bgp_route_propagation = false
-  tags = {
-    Project = "${var.project}"
-  }
-}
-
-data "azurerm_subnet" "priv_subnet" {
-  name                 = "${var.TAG}-${var.project}-subnet-${var.vnetsubnets["fgt_private"]["name"]}"
-  virtual_network_name = azurerm_virtual_network.vnetperftest.name
-  resource_group_name  = azurerm_resource_group.RG.name
-
-  depends_on = [
-    azurerm_subnet.vnetsubnets
-  ]
-}
-
-resource "azurerm_subnet_route_table_association" "vnet_priv_RTB_assoc" {
-  subnet_id      = data.azurerm_subnet.priv_subnet.id
-  route_table_id = azurerm_route_table.vnet_fgt_priv_RTB.id
-}
-
-///////////////// K8s Nodes RTB
-resource "azurerm_route_table" "vnet_k8s_node_RTB" {
-  name                = "${var.TAG}-${var.project}-k8s_nodes_RTB"
-  location            = var.vnetloc
-  resource_group_name = azurerm_resource_group.RG.name
-  //disable_bgp_route_propagation = false
-  tags = {
-    Project = "${var.project}"
-  }
-}
-
-data "azurerm_subnet" "node_subnet" {
-  name                 = "${var.TAG}-${var.project}-subnet-${var.vnetsubnets["K8s_nodes"]["name"]}"
-  virtual_network_name = azurerm_virtual_network.vnetperftest.name
-  resource_group_name  = azurerm_resource_group.RG.name
-
-  depends_on = [
-    azurerm_subnet.vnetsubnets
-  ]
-}
-
-resource "azurerm_subnet_route_table_association" "vnet_node_RTB_assoc" {
-  subnet_id      = data.azurerm_subnet.node_subnet.id
-  route_table_id = azurerm_route_table.vnet_k8s_node_RTB.id
-}
-
-resource "azurerm_route" "vnet_k8s_node_RTB_route1" {
+resource "azurerm_route" "vnet_k8s_node_rt_default" {
   name                   = "default"
-  resource_group_name    = azurerm_resource_group.RG.name
-  route_table_name       = azurerm_route_table.vnet_k8s_node_RTB.name
+  resource_group_name    = azurerm_resource_group.rg.name
+  route_table_name       = azurerm_route_table.vnet_route_tables["K8s_nodes"].name
   address_prefix         = "0.0.0.0/0"
   next_hop_type          = "VirtualAppliance"
   next_hop_in_ip_address = var.dut1["nic2"]["ip"]

@@ -1,6 +1,6 @@
-azsubscriptionid = "cc0d730a-9395-4c66-8a74-efdfc1b05670" // APAC-CSE
+azsubscriptionid = "fd5b7afe-28d8-4713-9892-c235918d8ecf" // Cloud CSE
 
-project = "microseg"
+project = "jmcdonough01-microseg"
 TAG     = "k8s"
 
 vnetloc  = "eastus"
@@ -14,6 +14,23 @@ vnetsubnets = {
   "K8s_nodes"   = { name = "K8s_nodes", cidr = "10.33.3.0/24" },
 }
 
+vnetroutetables = {
+  "fgt_public"  = { name = "fgt-pub_rt" },
+  "fgt_private" = { name = "fgt-priv_rt" },
+  "K8s_nodes"   = { name = "k8s_nodes_rt" },
+}
+
+nsgs = {
+  "pub-nsg"  = { name = "pub-nsg" },
+  "priv-nsg" = { name = "priv-nsg" },
+}
+
+nsgrules = {
+  "pub-nsg-inbound"   = { nsgname = "pub-nsg", rulename = "AllInbound", priority = "100", direction = "Inbound", access = "Allow" },
+  "pub-nsg-outbound"  = { nsgname = "pub-nsg", rulename = "AllOutbound", priority = "100", direction = "Outbound", access = "Allow" },
+  "priv-nsg-inbound"  = { nsgname = "priv-nsg", rulename = "AllInbound", priority = "100", direction = "Inbound", access = "Allow" },
+  "priv-nsg-outbound" = { nsgname = "priv-nsg", rulename = "AllOutbound", priority = "100", direction = "Outbound", access = "Allow" },
+}
 
 dut_vmsize    = "Standard_F2s_v2"
 FGT_IMAGE_SKU = "fortinet_fg-vm_payg_20190624"
