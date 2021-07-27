@@ -1,7 +1,7 @@
-azsubscriptionid = "fd5b7afe-28d8-4713-9892-c235918d8ecf" // Cloud CSE
+azsubscriptionid = ""
 
-project = "jmcdonough01-microseg"
-TAG     = "k8s"
+project = ""
+TAG     = ""
 
 vnetloc  = "eastus"
 vnetcidr = ["10.33.0.0/16"]
@@ -43,5 +43,5 @@ dut1 = {
 }
 
 
-username = "mremini"
-password = "Fortinet20217"
+username = "your-username"
+password = "your-password"
