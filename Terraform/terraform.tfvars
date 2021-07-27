@@ -20,6 +20,17 @@ vnetroutetables = {
   "K8s_nodes"   = { name = "k8s_nodes_rt" },
 }
 
+nsgs = {
+  "pub-nsg"  = { name = "pub-nsg" },
+  "priv-nsg" = { name = "priv-nsg" },
+}
+
+nsgrules = {
+  "pub-nsg-inbound"   = { nsgname = "pub-nsg", rulename = "AllInbound", priority = "100", direction = "Inbound", access = "Allow" },
+  "pub-nsg-outbound"  = { nsgname = "pub-nsg", rulename = "AllOutbound", priority = "100", direction = "Outbound", access = "Allow" },
+  "priv-nsg-inbound"  = { nsgname = "priv-nsg", rulename = "AllInbound", priority = "100", direction = "Inbound", access = "Allow" },
+  "priv-nsg-outbound" = { nsgname = "priv-nsg", rulename = "AllOutbound", priority = "100", direction = "Outbound", access = "Allow" },
+}
 
 dut_vmsize    = "Standard_F2s_v2"
 FGT_IMAGE_SKU = "fortinet_fg-vm_payg_20190624"

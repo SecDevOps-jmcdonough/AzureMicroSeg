@@ -28,73 +28,25 @@ resource "azurerm_public_ip" "FGTPublicIp" {
 
 }
 
-//############################  FGT NSG ##################
+//############################  FGT NSGs ##################
 
-resource "azurerm_network_security_group" "fgt_nsg_pub" {
-  name                = "${var.TAG}-${var.project}-pub-nsg"
+resource "azurerm_network_security_group" "fgt_nsgs" {
+  for_each = var.nsgs
+
+  name                = "${var.TAG}-${var.project}-${each.value.name}"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
 }
 
+resource "azurerm_network_security_rule" "fgt_nsg_rules" {
+  for_each = var.nsgrules
 
-resource "azurerm_network_security_rule" "fgt_nsg_pub_rule_egress" {
-  name                        = "AllOutbound"
+  name                        = each.value.rulename
   resource_group_name         = azurerm_resource_group.rg.name
-  network_security_group_name = azurerm_network_security_group.fgt_nsg_pub.name
-  priority                    = 100
-  direction                   = "Outbound"
-  access                      = "Allow"
-  protocol                    = "*"
-  source_port_range           = "*"
-  destination_port_range      = "*"
-  source_address_prefix       = "*"
-  destination_address_prefix  = "*"
-
-}
-resource "azurerm_network_security_rule" "fgt_nsg_pub_rule_ingress_1" {
-  name                        = "AllInbound"
-  resource_group_name         = azurerm_resource_group.rg.name
-  network_security_group_name = azurerm_network_security_group.fgt_nsg_pub.name
-  priority                    = 100
-  direction                   = "Inbound"
-  access                      = "Allow"
-  protocol                    = "*"
-  source_port_range           = "*"
-  destination_port_range      = "*"
-  source_address_prefix       = "*"
-  destination_address_prefix  = "*"
-
-}
-
-/////////////////////
-resource "azurerm_network_security_group" "fgt_nsg_priv" {
-  name                = "${var.TAG}-${var.project}-priv-nsg"
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
-}
-
-
-resource "azurerm_network_security_rule" "fgt_nsg_priv_rule_egress" {
-  name                        = "AllOutbound"
-  resource_group_name         = azurerm_resource_group.rg.name
-  network_security_group_name = azurerm_network_security_group.fgt_nsg_priv.name
-  priority                    = 100
-  direction                   = "Outbound"
-  access                      = "Allow"
-  protocol                    = "*"
-  source_port_range           = "*"
-  destination_port_range      = "*"
-  source_address_prefix       = "*"
-  destination_address_prefix  = "*"
-
-}
-resource "azurerm_network_security_rule" "fgt_nsg_priv_rule_ingress_1" {
-  name                        = "AllInbound"
-  resource_group_name         = azurerm_resource_group.rg.name
-  network_security_group_name = azurerm_network_security_group.fgt_nsg_priv.name
-  priority                    = 100
-  direction                   = "Inbound"
-  access                      = "Allow"
+  network_security_group_name = azurerm_network_security_group.fgt_nsgs[each.value.nsgname].name
+  priority                    = each.value.priority
+  direction                   = each.value.direction
+  access                      = each.value.access
   protocol                    = "*"
   source_port_range           = "*"
   destination_port_range      = "*"
@@ -107,11 +59,11 @@ resource "azurerm_network_security_rule" "fgt_nsg_priv_rule_ingress_1" {
 
 resource "azurerm_network_interface_security_group_association" "fgtnicpub" {
   network_interface_id      = element([for nic in azurerm_network_interface.dut1nics : nic.id], 0)
-  network_security_group_id = azurerm_network_security_group.fgt_nsg_pub.id
+  network_security_group_id = azurerm_network_security_group.fgt_nsgs["pub-nsg"].id
 }
 resource "azurerm_network_interface_security_group_association" "fgtnicpriv" {
   network_interface_id      = element([for nic in azurerm_network_interface.dut1nics : nic.id], 1)
-  network_security_group_id = azurerm_network_security_group.fgt_nsg_priv.id
+  network_security_group_id = azurerm_network_security_group.fgt_nsgs["priv-nsg"].id
 }
 
 ////////////////////////////////////////DUT//////////////////////////////

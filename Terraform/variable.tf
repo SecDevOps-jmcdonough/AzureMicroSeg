@@ -31,6 +31,13 @@ variable "vnetroutetables" {
   description = "VNET Route Table names"
 }
 
+variable "nsgs" {
+  description = "Network Security Groups"
+}
+
+variable "nsgrules" {
+  description = "Network Security Group Rules"
+}
 //--------------------------------
 variable "dut_vmsize" {
   description = "FortiGate VM size"
