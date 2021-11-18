@@ -9,22 +9,22 @@
         },
         "masterProfile": {
             "count": 1,
-            "dnsPrefix": "useyourown",
+            "dnsPrefix": "",
             "vmSize": "Standard_D2_v3",
-            "vnetSubnetId": "/subscriptions/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/resourceGroups/XXXXX/providers/Microsoft.Network/virtualNetworks/XXXXXXX/subnets/XXXXXXX",
-            "firstConsecutiveStaticIP": "put-your-own"
+            "vnetSubnetId": "/subscriptions/SUBSCRIPTION_ID/resourceGroups/RESOURCE_GROUP_NAME/providers/Microsoft.Network/virtualNetworks/VNET_NAME/subnets/MASTER_SUBNET_NAME",
+            "firstConsecutiveStaticIP": "MASTER_IP_ADDRESS"
         },
         "agentPoolProfiles": [
             {
                 "name": "nodepool1",
                 "count": 1,
                 "vmSize": "Standard_D2_v3",
-                "vnetSubnetId": "/subscriptions/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/resourceGroups/XXXXX/providers/Microsoft.Network/virtualNetworks/XXXXXXX/subnets/XXXXXXX",
+                "vnetSubnetId": "/subscriptions/SUBSCRIPTION_ID/resourceGroups/RESOURCE_GROUP_NAME/providers/Microsoft.Network/virtualNetworks/VNET_NAME/subnets/NODE_SUBNET_NAME",
                 "availabilityProfile": "AvailabilitySet"
             }
         ],
         "linuxProfile": {
-            "adminUsername": "useyourown",
+            "adminUsername": "ADMIN_USER_NAME",
             "ssh": {
                 "publicKeys": [
                     {

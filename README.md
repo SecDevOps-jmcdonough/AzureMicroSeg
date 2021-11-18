@@ -3,51 +3,77 @@
 ## Workshop main objectives
 
 * Deploy a Kubernetes Cluster
+* Deploy FortiGate Infrastructure
 * Deploy Azure Automation
 * Micro Segmentation of Kubernetes Pods with FortiGate Automation Stitches
 
 ## Chapter 1 - Preparation Steps [estimated duration 5min]
 
-1. Ensure you have the following tools available in your cloudshell:
+An Azure Account with a valid Subscription is required.
 
-    * Azure account with a valid subscription
-    * Azure Cloudshell
-    * Azure CLI,  <https://docs.microsoft.com/en-us/cli/azure/install-azure-cli>
-    * Terraform, <https://learn.hashicorp.com/tutorials/terraform/install-cli>
-    * kubectl,  <https://kubernetes.io/docs/tasks/tools/>
-    * aks-engine v0.65.0, <https://github.com/Azure/aks-engine/releases/>
+1. Ensure you have the following tools available in your Azure Cloudshell:
 
-    * Clone the repository in your cloud shell
+    * [Terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli) - `terraform --version`
+    * [kubectl](https://kubernetes.io/docs/tasks/tools/) - `kubectl version`
+
+    * Install the [aks-engine v0.65.0](https://github.com/Azure/aks-engine/releases/)
+        * download aks-engine and transfer the binary to your home directory
+
+    ```bash
+        wget https://github.com/Azure/aks-engine/releases/download/v0.64.0/aks-engine-v0.64.0-linux-amd64.zip
+        unzip aks-engine-v0.64.0-linux-amd64.zip
+        mv aks-engine-v0.64.0-linux-amd64/aks-engine ./
+        chmod +x aks-engine 
+    ```
+
+    * Clone the repository in your cloudshell
 
         `git clone https://github.com/fortinetsecdevops/AzureMicroSeg`
 
         ![clone](images/git_clone.jpg)
 
-    * download aks-engine and transfer the binary to your home directory
-
-        ```bash
-        wget https://github.com/Azure/aks-engine/releases/download/v0.64.0/aks-engine-v0.64.0-linux-amd64.zip
-        unzip aks-engine-v0.64.0-linux-amd64.zip
-        mv aks-engine-v0.64.0-linux-amd64/aks-engine ./
-        chmod +x aks-engine 
-        ```
-
 ## Chapter 2 - Create the environment [estimated duration 20min]
 
-1. Create the environment using the Terraform code provided. At the end of this step you should have an environment similar to the below
+1. Create the environment using the Terraform code provided. 
+
+    * Update the `terraform.tfvars` file, provide values for these variables
+        * azsubscriptionid = ""
+        * project  = ""
+        * TAG      = ""
+        * username = ""
+        * password = ""
+    * Run `terraform init`
+    * Run `terraform validate`
+        * If all is good this message will be displayed
+          `Success! The configuration is valid.`
+    * Run `terraform plan`
+    * Run `terraform apply`
+        * terraform will ask for confirmation of the planned actions, type `yes`
+
+    At the end of this step you should have an environment similar to the below
 
     ![Globalenvironment](images/environment.jpg)
 
-1. Deploy the Self-Managed cluster using aks-engine. Customize the deployment file to your own environment
+1. Deploy the Self-Managed cluster using aks-engine. Customize the deployment file to your environment.
+    * Deployment File - `AzureMicroSeg/K8S/aks-calico-azure.json`
+    * Replace these values
+        * DNS_PREFIX
+        * SUBSCRIPTION_ID
+        * RESOURCE_GROUP_NAME
+        * VNET_NAME
+        * MASTER_SUBNET_NAME
+        * MASTER_IP_ADDRESS
+        * ADMIN_USER_NAME
 
     ```bash
-    ./aks-engine deploy --resource-group k8s-microseg --location eastus --api-model ./AzureMicroSeg/K8S/aks-calico-azure.json
+    ./aks-engine deploy --dns-prefix k8smicroseg --resource-group k8s-microseg --location eastus --api-model ./AzureMicroSeg/K8S/aks-calico-azure.json --auto-suffix
     ```
 
 1. Verify that the deployment is successful by listing the K8S nodes. To access your cluster, transfer the kubeconfig file generated at the previous step to your kubeconfig directory
 
     ```bash
     cp  _output/k8smicroseg/kubeconfig/kubeconfig.eastus.json /home/mounira/.kube/config
+    kubectl get nodes -o wide
     ```
 
     ![clone](images/k8s-nodes.jpg)

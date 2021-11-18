@@ -3,6 +3,9 @@ azsubscriptionid = ""
 project = ""
 TAG     = ""
 
+username = "your-username"
+password = "your-password"
+
 vnetloc  = "eastus"
 vnetcidr = ["10.33.0.0/16"]
 
@@ -41,7 +44,3 @@ dut1 = {
   "nic1" = { vmname = "fgt1", name = "port1", subnet = "fgt_public", ip = "10.33.0.4" },
   "nic2" = { vmname = "fgt1", name = "port2", subnet = "fgt_private", ip = "10.33.1.4" },
 }
-
-
-username = "your-username"
-password = "your-password"
