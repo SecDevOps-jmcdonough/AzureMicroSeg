@@ -86,15 +86,15 @@ An Azure Account with a valid Subscription is required.
 1. Configure The FortiGate K8S Connector and verify that it's UP
 
     * Create a ServiceAccount for the FortiGate
+        `kubectl create serviceaccount fgt-svcaccount`
     * Create a clusterrole
+        `kubectl apply -f ./K8S/fgt-k8s-connector.yaml`
     * Create a clusterrolebinding
+        `kubectl create clusterrolebinding fgt-connector --clusterrole=fgt-connector --serviceaccount=default:fgt-svcaccount`
     * Extract the ServiceAccount secret token and configure the FortiGate
+        `kubectl get secrets -o jsonpath="{.items[?(@.metadata.annotations['kubernetes\.io/service-account\.name']=='fgt-svcaccount')].data.token}"| base64 --decode`
 
-    You can extract the secret token using the following command
-
-    ```bash
-    kubectl get secrets -o jsonpath="{.items[?(@.metadata.annotations['kubernetes\.io/service-account\.name']=='fgt-svcaccount')].data.token}"| base64 --decode
-    ```
+    ![K8s-connector](images/k8s-connector.jpg)
 
 1. Deploy two pods, one tagged with the label app=web and the other with the label app=db. You can use the provided example web-db-deployment.yaml
 
