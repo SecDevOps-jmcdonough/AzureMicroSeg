@@ -34,30 +34,30 @@ An Azure Account with a valid Subscription is required.
 
 ## Chapter 2 - Create the environment [estimated duration 20min]
 
-1. Create the environment using the Terraform code provided. 
+1. Create the environment using the Terraform code provided.
 
-    * Update the `terraform.tfvars` file, provide values for these variables
+    1. Update the `terraform.tfvars` file, provide values for these variables
         * azsubscriptionid = ""
         * project  = ""
         * TAG      = ""
         * username = ""
         * password = ""
-    * Run `terraform init`
-    * Run `terraform validate`
-        * If all is good this message will be displayed
+        The `terraform.tfvars` file provides inputs for the resources that will be deployed.
+    1. Run `terraform init`
+    1. Run `terraform validate`
+        * If everything is valid, this message will be displayed
           `Success! The configuration is valid.`
-    * Run `terraform plan`
-    * Run `terraform apply`
-        * terraform will ask for confirmation of the planned actions, type `yes`
+    1. Run `terraform plan`
+    1. Run `terraform apply`
+        * terraform will ask for confirmation of the planned deployment, type `yes`
 
     At the end of this step you should have an environment similar to the below
 
     ![Globalenvironment](images/environment.jpg)
 
-1. Deploy the Self-Managed cluster using aks-engine. Customize the deployment file to your environment.
+1. Deploy the Self-Managed cluster using aks-engine, customize the deployment file to your environment.
     * Deployment File - `AzureMicroSeg/K8S/aks-calico-azure.json`
     * Replace these values
-        * DNS_PREFIX
         * SUBSCRIPTION_ID
         * RESOURCE_GROUP_NAME
         * VNET_NAME
@@ -73,6 +73,7 @@ An Azure Account with a valid Subscription is required.
 
     ```bash
     cp  _output/k8smicroseg/kubeconfig/kubeconfig.eastus.json /home/mounira/.kube/config
+
     kubectl get nodes -o wide
     ```
 
@@ -134,81 +135,80 @@ Automation in Azure can be accomplished in a number of ways, Logic Apps, Functio
 
 This part of the exercise goes through the process of creating an Azure Automation account that enables the running of an Azure Runbook via a Webhook. An Azure Runbook is just a PowerShell script that the Automation Account can run. The actions the Runbook can perform are controlled by the rights and scope (where those actions can be performed) that have been granted to the Automation Account.
 
-The Actions come are contained in the PowerShell Modules that have been imported into the Automation Account. The PowerShell Modules are libraries of commands called Cmdlets that are grouped into several domains. For example, Accounts, Automation, Compute, Network, and Resources.
+The **Actions** are contained in the PowerShell Modules that have been imported into the Automation Account. The PowerShell Modules are libraries of commands called Cmdlets that are grouped into several domains. For example, Accounts, Automation, Compute, Network, and Resources.
 
 All of the steps can be performed in the Azure Portal. However, the commands shown in each section can be run directly in Azure Cloudshell. Cloudshell has all the required utilities to execute the commands. Nothing additional needs to be loaded on a personal device.
 
 1. Azure Automation Account
-    * Create Automation Account [Automation Account](https://docs.microsoft.com/en-us/azure/automation/automation-create-standalone-account)
+    Create Automation Account [Automation Account](https://docs.microsoft.com/en-us/azure/automation/automation-create-standalone-account)
 
-        1. Create a new Resource Group
+    1. Create a new Resource Group **OR** if using an existing Resource Group Skip this step.
 
-        ```PowerShell
-        New-AzResourceGroup -Name k8s-microseg -Location eastus
-        ```
+    ```PowerShell
+    New-AzResourceGroup -Name <RESOURCE_GROUP_NAME> -Location eastus
+    ```
 
-        1. Create an Automation Account in the new Resource Group
-            * Choose a Location
-            * Provide a Name
-            * Choose the Basic Plan
-            * Indicate the assignment of a System Assigned Identity </br></br>
+    1. Create an Automation Account in the Resource Group
+        * Choose a Location
+        * Provide a Name
+        * Choose the Basic Plan
+        * Indicate the assignment of a System Assigned Identity </br></br>
 
-        ```PowerShell
-        New-AzAutomationAccount -ResourceGroupName k8s-microseg -Location eastus -Name user-automation-01 -AssignSystemIdentity -Plan Basic
-        ```
+    ```PowerShell
+    New-AzAutomationAccount -ResourceGroupName <RESOURCE_GROUP_NAME> -Location eastus -Name user-automation-01 -AssignSystemIdentity -Plan Basic
+    ```
 
-    * Setup Automation Account [Managed Identity] (<https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview>)
+    1. Setup Automation Account [Managed Identity] (<https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview>)
 
-        ```PowerShell
-        New-AzRoleAssignment -ObjectId (Get-AzAutomationAccount -ResourceGroupName k8s-microseg -Name user-automation-01).Identity.PrincipalId -RoleDefinitionName "Contributor" -Scope (Get-AzResourceGroup -Name k8s-microseg -Location eastus).ResourceId
-        ```
+    ```PowerShell
+    New-AzRoleAssignment -ObjectId (Get-AzAutomationAccount -ResourceGroupName <RESOURCE_GROUP_NAME> -Name user-automation-01).Identity.PrincipalId -RoleDefinitionName "Contributor" -Scope (Get-AzResourceGroup -Name <RESOURCE_GROUP_NAME> -Location eastus).ResourceId
+    ```
 
-    * Import Az PowerShell Modules
-        * Az.Accounts - This module needs to be imported first as the other modules have a dependency on it
+    1. Import Az PowerShell Modules - These modules are not available by default in a Azure Automation Account. The Powershell command below can be used as an initial import to the Azure Automation Account or as an update.
+        * Az.Accounts
         * Az.Automation
         * Az.Compute
         * Az.Network
         * Az.Resources
 
-        ```PowerShell
-        Import-AzAutomationModule -ResourceGroupName k8s-microseg -AutomationAccountName user-automation-01 -Name Az.Accounts  -ContentLinkUri https://www.powershellgallery.com/api/v2/package/Az.Accounts
-        @("Automation","Compute","Network","Resources") | ForEach-Object {Import-AzAutomationModule -ResourceGroupName k8s-microseg -AutomationAccountName user-automation-01 -Name Az.$_  -ContentLinkUri https://www.powershellgallery.com/api/v2/package/Az.$_}
-        ```
+    ```PowerShell
+    @("Accounts","Automation","Compute","Network","Resources") | ForEach-Object {Import-AzAutomationModule -ResourceGroupName <RESOURCE_GROUP_NAME> -AutomationAccountName user-automation-01 -Name Az.$_  -ContentLinkUri https://www.powershellgallery.com/api/v2/package/Az.$_}
+    ```
 
 1. Azure Automation Runbook
-    * Create, Import, and Publish Runbook
+    1. Create, Import, and Publish Runbook - A Runbook is simply the PowerShell Code that runs in response to a trigger. Triggers can be manual, scheduled, and webhook.
 
-        ```PowerShell
-        New-AzAutomationRunbook -ResourceGroupName k8s-microseg -AutomationAccountName user-automation-01 -Name ManageDynamicAddressRoutes -Type PowerShell
-        
-        Import-AzAutomationRunbook -Name ManageDynamicAddressRoutes -ResourceGroupName k8s-microseg -AutomationAccountName user-automation-01 -Path ./AzureMicroSeg/Azure/ManageDynamicAddressRoutes.ps1 -Type PowerShell –Force
-        
-        Publish-AzAutomationRunbook -ResourceGroupName k8s-microseg -AutomationAccountName user-automation-01 -Name ManageDynamicAddressRoutes
-        ```
+    ```PowerShell
+    New-AzAutomationRunbook -ResourceGroupName <RESOURCE_GROUP_NAME> -AutomationAccountName user-automation-01 -Name ManageDynamicAddressRoutes -Type PowerShell
+    
+    Import-AzAutomationRunbook -Name ManageDynamicAddressRoutes -ResourceGroupName <RESOURCE_GROUP_NAME> -AutomationAccountName user-automation-01 -Path ./AzureMicroSeg/Azure/ManageDynamicAddressRoutes.ps1 -Type PowerShell –Force
+    
+    Publish-AzAutomationRunbook -ResourceGroupName <RESOURCE_GROUP_NAME> -AutomationAccountName user-automation-01 -Name ManageDynamicAddressRoutes
+    ```
 
-    * Create Webhook
+    1. Create Webhook
 
-        ```PowerShell
-        New-AzAutomationWebhook -ResourceGroupName k8s-microseg -AutomationAccountName user-automation-01 -RunbookName ManageDynamicAddressRoutes -Name routetableupdate -IsEnabled $True -ExpiryTime "07/12/2022" -Force
-        ```
+    ```PowerShell
+    New-AzAutomationWebhook -ResourceGroupName <RESOURCE_GROUP_NAME> -AutomationAccountName user-automation-01 -RunbookName ManageDynamicAddressRoutes -Name routetableupdate -IsEnabled $True -ExpiryTime "11/30/2022" -Force
+    ```
 
-        The output will include the URL of the enabled webhook. The webhook is only viewable at creation and cannot be retrieved afterwards. The output will look similar to below.
+    The output will include the URL of the enabled webhook. The webhook is only viewable at creation and cannot be retrieved afterwards. The output will look similar to below.
 
-        ```text
-        ResourceGroupName     : automation-01
-        AutomationAccountName : user-automation-01
-        Name                  : routetableupdate
-        CreationTime          : 7/13/2021 8:33:28 PM +00:00
-        Description           :
-        ExpiryTime            : 7/12/2022 12:00:00 AM +00:00
-        IsEnabled             : True
-        LastInvokedTime       : 1/1/0001 12:00:00 AM +00:00
-        LastModifiedTime      : 7/13/2021 8:33:28 PM +00:00
-        Parameters            : {}
-        RunbookName           : ManageDynamicAddressRoutes
-        WebhookURI            : https://f5f015ed-f566-483d-c972-0c2c3ca2a296.webhook.eus2.azure-automation.net/webhooks?token=P1GSd4Tasf5i1VYaVkFQvG29QCjkA8AOHY%2bsVLZOFSA%3d
-        HybridWorker          :
-        ```
+    ```text
+    ResourceGroupName     : automation-01
+    AutomationAccountName : user-automation-01
+    Name                  : routetableupdate
+    CreationTime          : 7/13/2021 8:33:28 PM +00:00
+    Description           :
+    ExpiryTime            : 7/12/2022 12:00:00 AM +00:00
+    IsEnabled             : True
+    LastInvokedTime       : 1/1/0001 12:00:00 AM +00:00
+    LastModifiedTime      : 7/13/2021 8:33:28 PM +00:00
+    Parameters            : {}
+    RunbookName           : ManageDynamicAddressRoutes
+    WebhookURI            : https://f5f015ed-f566-483d-c972-0c2c3ca2a296.webhook.eus2.azure-automation.net/webhooks?token=P1GSd4Tasf5i1VYaVkFQvG29QCjkA8AOHY%2bsVLZOFSA%3d
+    HybridWorker          :
+    ```
 
 1. FortiGate Dynamic Address
     * Create Dynamic Address to match a Web pod
