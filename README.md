@@ -83,7 +83,7 @@ An Azure Account with a valid Subscription is required.
 
     ![Globalenvironment2](images/environment_chapter2.jpg)
 
-1. Configure The FortiGate K8S Connector and verify that it's UP
+1. Configure The [FortiGate K8S Connector](https://docs.fortinet.com/document/fortigate-private-cloud/7.0.0/kubernetes-administration-guide/718577) and verify that it's UP
 
     * Create a ServiceAccount for the FortiGate
 
@@ -105,16 +105,18 @@ An Azure Account with a valid Subscription is required.
 
 1. Deploy two pods, one tagged with the label app=web and the other with the label app=db. You can use the provided example web-db-deployment.yaml
 
+    `kubectl apply -f ./K8S/web-db-deployment.yaml
+
     ![pods](images/k8s-pods.jpg)
 
 **************
 
 1. Questions
 
-    * Why the aks-engine deployment created Load balancers?
-    * Why a UDP/1123 load balancing rule has been created on the Master LB?
+    * Why did the aks-engine deployment create Load balancers?
+    * Why was a UDP/1123 load balancing rule created on the Master LB?
     * How many PODs can the deployed Node accommodate?
-    * If we want to make the communication to the MasterNode go through the FortiGate, what are the changes required ?
+    * What are the changes required to make the communication to the MasterNode go through the FortiGate?
 
 **************
 
