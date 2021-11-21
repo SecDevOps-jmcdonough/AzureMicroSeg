@@ -3,7 +3,7 @@
 locals {
   config_files = {
     "aks-calico-azure" = {
-      filename = "aks-k8s-connector.yaml"
+      filename = "aks-calico-azure.json"
       content = <<K8SCONNECTOR
       {
           "apiVersion": "vlabs",
