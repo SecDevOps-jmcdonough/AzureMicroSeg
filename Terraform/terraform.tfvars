@@ -37,7 +37,7 @@ nsgrules = {
 
 dut_vmsize    = "Standard_F2s_v2"
 FGT_IMAGE_SKU = "fortinet_fg-vm_payg_20190624"
-FGT_VERSION   = "7.0.2"
+FGT_VERSION   = "7.0.0"
 FGT_OFFER     = "fortinet_fortigate-vm_v5"
 
 dut1 = {

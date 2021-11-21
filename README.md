@@ -66,13 +66,15 @@ An Azure Account with a valid Subscription is required.
         * ADMIN_USER_NAME
 
     ```bash
-    ./aks-engine deploy --dns-prefix k8smicroseg --resource-group k8s-microseg --location eastus --api-model ./AzureMicroSeg/Terraform/aks-calico-azure.json --auto-suffix
+    ./aks-engine deploy --dns-prefix k8smicroseg --resource-group RESOURCE_GROUP_NAME --location eastus --api-model ./AzureMicroSeg/Terraform/aks-calico-azure.json --auto-suffix
     ```
 
-1. Verify that the deployment is successful by listing the K8S nodes. To access your cluster, transfer the kubeconfig file generated at the previous step to your kubeconfig directory
+1. Verify that the deployment is successful by listing the K8S nodes. To access the cluster, transfer the kubeconfig file that was generated during the previous step, to the kubeconfig directory.
 
     ```bash
-    cp  _output/k8smicroseg/kubeconfig/kubeconfig.eastus.json /home/mounira/.kube/config
+    mkdir ~/.kube
+
+    cp  _output/k8smicroseg-RANDOM_ID/kubeconfig/kubeconfig.eastus.json ~/.kube/config
 
     kubectl get nodes -o wide
     ```
@@ -91,7 +93,7 @@ An Azure Account with a valid Subscription is required.
 
     * Create a clusterrole
 
-        `kubectl apply -f ./K8S/fgt-k8s-connector.yaml`
+        `kubectl apply -f ./AzureMicroSeg/K8S/fgt-k8s-connector.yaml`
 
     * Create a clusterrolebinding
 
@@ -105,7 +107,7 @@ An Azure Account with a valid Subscription is required.
 
 1. Deploy two pods, one tagged with the label app=web and the other with the label app=db. You can use the provided example web-db-deployment.yaml
 
-    `kubectl apply -f ./K8S/web-db-deployment.yaml
+    `kubectl apply -f ./AzureMicroSeg/K8S/web-db-deployment.yaml
 
     ![pods](images/k8s-pods.jpg)
 
