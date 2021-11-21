@@ -1,5 +1,59 @@
 //############################ Resource Group ############################
 
+locals {
+  config_files = {
+    "aks-calico-azure" = {
+      filename = "aks-k8s-connector.yaml"
+      content = <<K8SCONNECTOR
+      {
+          "apiVersion": "vlabs",
+          "properties": {
+              "orchestratorProfile": {
+                  "kubernetesConfig": {
+                      "networkPlugin": "azure",
+                      "networkPolicy": "calico"
+                  }
+              },
+              "masterProfile": {
+                  "count": 1,
+                  "dnsPrefix": "",
+                  "vmSize": "Standard_D2_v3",
+                  "vnetSubnetId": "/subscriptions/${var.azsubscriptionid}/resourceGroups/${azurerm_resource_group.rg.name}/providers/Microsoft.Network/virtualNetworks/${azurerm_virtual_network.vnet.name}/subnets/${azurerm_subnet.subnets["k8s_master"].name}",
+                  "firstConsecutiveStaticIP": "${cidrhost(var.vnetsubnets["k8s_master"].cidr, 10)}"
+              },
+              "agentPoolProfiles": [
+                  {
+                      "name": "nodepool1",
+                      "count": 1,
+                      "vmSize": "Standard_D2_v3",
+                      "vnetSubnetId": "/subscriptions/${var.azsubscriptionid}/resourceGroups/${azurerm_resource_group.rg.name}/providers/Microsoft.Network/virtualNetworks/${azurerm_virtual_network.vnet.name}/subnets/${azurerm_subnet.subnets["K8s_nodes"].name}",
+                      "availabilityProfile": "AvailabilitySet"
+                  }
+              ],
+              "linuxProfile": {
+                  "adminUsername": "${var.username}",
+                  "ssh": {
+                      "publicKeys": [
+                          {
+                              "keyData": ""
+                          }
+                      ]
+                  }
+              }
+          }
+      }
+      K8SCONNECTOR
+    }
+  }
+}
+
+resource "local_file" "file" {
+
+  for_each = local.config_files
+
+  filename = "${path.module}/${each.value.filename}"
+  content  = each.value.content
+}
 resource "azurerm_resource_group" "rg" {
   name     = "${var.TAG}-${var.project}"
   location = var.vnetloc

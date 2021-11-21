@@ -55,18 +55,18 @@ An Azure Account with a valid Subscription is required.
 
     ![Globalenvironment](images/environment.jpg)
 
-1. Deploy the Self-Managed cluster using aks-engine, customize the deployment file to your environment.
-    * Deployment File - `AzureMicroSeg/K8S/aks-calico-azure.json`
-    * Replace these values
+1. Deploy the Self-Managed cluster using aks-engine, a file customized to the deployment environment was created by the Terraform process.
+    * Deployment File - `AzureMicroSeg/Terraform/aks-calico-azure.json`
+    * These values were read from the deployment environment and used to create the file. The file is generated from code in the network.tf file
         * SUBSCRIPTION_ID
         * RESOURCE_GROUP_NAME
         * VNET_NAME
         * MASTER_SUBNET_NAME
-        * MASTER_IP_ADDRESS
+        * MASTER_IP_ADDRESS - this value is set to the 10th IP in the subnet for Master Nodes
         * ADMIN_USER_NAME
 
     ```bash
-    ./aks-engine deploy --dns-prefix k8smicroseg --resource-group k8s-microseg --location eastus --api-model ./AzureMicroSeg/K8S/aks-calico-azure.json --auto-suffix
+    ./aks-engine deploy --dns-prefix k8smicroseg --resource-group k8s-microseg --location eastus --api-model ./AzureMicroSeg/Terraform/aks-calico-azure.json --auto-suffix
     ```
 
 1. Verify that the deployment is successful by listing the K8S nodes. To access your cluster, transfer the kubeconfig file generated at the previous step to your kubeconfig directory
