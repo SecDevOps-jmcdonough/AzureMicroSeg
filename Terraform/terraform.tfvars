@@ -1,10 +1,10 @@
 azsubscriptionid = ""
 
 project = ""
-TAG     = ""
+TAG     = "k8s"
 
-username = "your-username"
-password = "your-password"
+username = "azureuser"
+password = "Password123!!"
 
 vnetloc  = "eastus"
 vnetcidr = ["10.33.0.0/16"]

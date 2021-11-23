@@ -11,58 +11,91 @@
 
 An Azure Account with a valid Subscription is required.
 
-1. Ensure you have the following tools available in your Azure Cloudshell:
+1. Open [Cloudshell](https://docs.microsoft.com/en-us/azure/cloud-shell/overview), commands in this lab are both bash and PowerShell, ensure that the PowerShell environment is selected.
+
+1. Ensure the following tools are available in Azure Cloudshell, run each command to determine the version and ensure the command is available:
 
     * [Terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli) - `terraform --version`
     * [kubectl](https://kubernetes.io/docs/tasks/tools/) - `kubectl version`
+    * [git](https://git-scm.com/) - `git --version`
 
-    * Install the [aks-engine v0.65.0](https://github.com/Azure/aks-engine/releases/)
-        * download aks-engine and transfer the binary to your home directory
+1. Get Subscription ID, if more than one Subscription is available Determine which subscription is currently the default Subscription. If necessary Select the desired Subscription.
 
-    ```bash
-        wget https://github.com/Azure/aks-engine/releases/download/v0.64.0/aks-engine-v0.64.0-linux-amd64.zip
-        unzip aks-engine-v0.64.0-linux-amd64.zip
-        mv aks-engine-v0.64.0-linux-amd64/aks-engine ./
-        chmod +x aks-engine 
-    ```
-
-    * Clone the repository in your cloudshell
-
-        `git clone https://github.com/fortinetsecdevops/AzureMicroSeg`
-
-        ![clone](images/git_clone.jpg)
+    `Get-AzSubscription`
+    `Get-AzContext`
+    `Select-AzSubscription -Subscription <subscription_id>`
 
 ## Chapter 2 - Create the environment [estimated duration 20min]
 
-1. Create the environment using the Terraform code provided.
+### Create the environment using the provided AKS Engine and Terraform code
 
-    1. Update the `terraform.tfvars` file, provide values for these variables
-        * azsubscriptionid = ""
-        * project  = ""
-        * TAG      = ""
-        * username = ""
-        * password = ""
+1. Create a working directory and switch to it.
 
-        The `terraform.tfvars` file provides inputs for the resources that will be deployed.
+    ```bash
+    mkdir Training
+    cd Training
+    ```
 
-    1. Run `terraform init`
-        * Initialize the Terraform environment, download required providers
+1. Clone the Github AzureMicroSeg repository to Cloudshell
 
-    1. Run `terraform validate`
-        * Validate terraform files, references, variables, etc. If everything is valid, this message will be displayed
-          `Success! The configuration is valid.`
+    `git clone https://github.com/fortinetsecdevops/AzureMicroSeg`
+    ![clone](images/git_clone.jpg)
 
-    1. Run `terraform plan`
-        * Plan what objects will be created, updated, destroyed
+1. Install the [aks-engine v0.64.0](https://github.com/Azure/aks-engine/releases/)
 
-    1. Run `terraform apply`
-        * Apply the terraform directives, terraform will ask for confirmation of the planned deployment, type `yes`
+* The AKS Engine is a template-driven way to provision a self-managed Kubernetes cluster
+* Download aks-engine and transfer the binary to the working directory
 
-    At the end of this step you should have an environment similar to the below
+    ```bash
+    cd AzureMicroSeg
+    wget https://github.com/Azure/aks-engine/releases/download/v0.64.0/aks-engine-v0.64.0-linux-amd64.zip
+    unzip aks-engine-v0.64.0-linux-amd64.zip
+    mv aks-engine-v0.64.0-linux-amd64/aks-engine ./
+    chmod +x aks-engine 
+    ```
 
-    ![Globalenvironment](images/environment.jpg)
+  * Clone the Github AzureMicroSeg repository to Cloudshell
 
-1. Deploy the Self-Managed cluster using aks-engine, a file customized to the deployment environment was created by the Terraform process.
+    `git clone https://github.com/fortinetsecdevops/AzureMicroSeg`
+    ![clone](images/git_clone.jpg)
+
+1. Use **Terraform** to deploy the FortiGate and Azure Networking
+
+* Change to the directory Terraform
+
+  `cd Terraform`
+
+* Update the `terraform.tfvars` file, provide values for these variables. The easiest way to update the file is to use the Cloudshell editor.
+
+  * azsubscriptionid = ""
+  * project          = ""
+  * TAG              = "k8s" <- This value does not have to change, shown for illustrative purposes
+
+  > The deployment Azure RESOURCE GROUP NAME  will be the combination of the *TAG* and *project* values
+  >
+  > For example, if the TAG value is **k8s** and the project value is **microseg**
+  > the RESOURCE GROUP NAME will be **k8s-microseg**
+
+The `terraform.tfvars` file provides inputs for the resources that will be deployed.
+
+1. Run `terraform init`
+    * Initialize the Terraform environment, download required providers
+
+1. Run `terraform validate`
+    * Validate terraform files, references, variables, etc. If everything is valid, this message will be displayed
+        `Success! The configuration is valid.`
+
+1. Run `terraform plan`
+    * Plan what objects will be created, updated, destroyed
+
+1. Run `terraform apply`
+    * Apply the terraform directives, terraform will ask for confirmation of the planned deployment, type `yes`
+
+At the end of this step environment will be similar to the one pictured below
+
+![Globalenvironment](images/environment.jpg)
+
+1. Deploy the Self-Managed Kubernetes cluster using **aks-engine**. A file customized to the deployment environment **WAS CREATED** by the Terraform process.
     * Deployment File - `AzureMicroSeg/Terraform/aks-calico-azure.json`
     * These values were read from the deployment environment and used to create the file. The file is generated from code in the network.tf file
         * SUBSCRIPTION_ID
@@ -72,43 +105,52 @@ An Azure Account with a valid Subscription is required.
         * MASTER_IP_ADDRESS - this value is set to the 10th IP in the subnet for Master Nodes
         * ADMIN_USER_NAME
 
+    > Many of the commands in this lab require the specification of a RESOURCE_GROUP_NAME
+    > To make it easy to copy and paste the commands, set an environment variable to the RESOURCE_GROUP_NAME of the FortiGate and K8s deployment
+    >
+    > For example, for a deployment Resource Group named 'k8s-microseg' create an environment variable like this.
+    >
+    > $env:RESOURCE_GROUP_NAME='k8s-microseg'
+    >
+
     ```bash
-    ./aks-engine deploy --dns-prefix k8smicroseg --resource-group RESOURCE_GROUP_NAME --location eastus --api-model ./AzureMicroSeg/Terraform/aks-calico-azure.json --auto-suffix
+    cd ..
+    ./aks-engine deploy --dns-prefix k8smicroseg --resource-group $env:RESOURCE_GROUP_NAME --location eastus --api-model ./AzureMicroSeg/Terraform/aks-calico-azure.json --auto-suffix
     ```
 
-1. Verify that the deployment is successful by listing the K8S nodes. To access the cluster, transfer the kubeconfig file that was generated during the previous step, to the kubeconfig directory.
+1. Verify that the deployment is successful by listing the K8S nodes. To access the cluster, copy the kubeconfig file that was generated during the previous step, to the ~/.kube directory.
 
     ```bash
-    mkdir ~/.kube
-
+    mkdir -pv ~/.kube
     cp  _output/k8smicroseg-RANDOM_ID/kubeconfig/kubeconfig.eastus.json ~/.kube/config
-
     kubectl get nodes -o wide
     ```
 
     ![clone](images/k8s-nodes.jpg)
 
-    At the end of this step you should have the following setup
+    At the end of this step the environment should be similar to below
 
     ![Globalenvironment2](images/environment_chapter2.jpg)
 
-1. Configure The [FortiGate K8S Connector](https://docs.fortinet.com/document/fortigate-private-cloud/7.0.0/kubernetes-administration-guide/718577) and verify that it's UP
+1. Configure The [FortiGate K8S Connector](https://docs.fortinet.com/document/fortigate-private-cloud/7.0.0/kubernetes-administration-guide/718577) and verify that it is UP
 
-    * Create a ServiceAccount for the FortiGate
+* Run the following commands to enable the FortiGate Kubernetes Connector
 
-        `kubectl create serviceaccount fgt-svcaccount`
+  * Create a ServiceAccount for the FortiGate
 
-    * Create a clusterrole
+    `kubectl create serviceaccount fgt-svcaccount`
 
-        `kubectl apply -f ./AzureMicroSeg/K8S/fgt-k8s-connector.yaml`
+  * Create a clusterrole
 
-    * Create a clusterrolebinding
+      `kubectl apply -f ./AzureMicroSeg/K8S/fgt-k8s-connector.yaml`
 
-        `kubectl create clusterrolebinding fgt-connector --clusterrole=fgt-connector --serviceaccount=default:fgt-svcaccount`
+  * Create a clusterrolebinding
 
-    * Extract the ServiceAccount secret token and configure the FortiGate
+      `kubectl create clusterrolebinding fgt-connector --clusterrole=fgt-connector --serviceaccount=default:fgt-svcaccount`
 
-        `kubectl get secrets -o jsonpath="{.items[?(@.metadata.annotations['kubernetes\.io/service-account\.name']=='fgt-svcaccount')].data.token}"| base64 --decode`
+  * Extract the ServiceAccount secret token and configure the FortiGate
+
+      `kubectl get secrets -o jsonpath="{.items[?(@.metadata.annotations['kubernetes\.io/service-account\.name']=='fgt-svcaccount')].data.token}"| base64 --decode`
 
     ![K8s-connector](images/k8s-connector.jpg)
 
@@ -129,7 +171,7 @@ An Azure Account with a valid Subscription is required.
 
 **************
 
-## Chapter 3 - Create the RunBook and configure the FortiGate Automation Stitches [estimated duration 30min]
+## Chapter 3 - Create the Azure Automation RunBook and Configure the FortiGate Automation Stitches [estimated duration 30min]
 
 A FortiGate Automation Stitch brings together a trigger and an action. In this exercise the trigger is a log event and the action is the execution of a webhook.
 
@@ -157,22 +199,8 @@ The **Actions** are contained in the PowerShell Modules that have been imported 
 
 All of the steps can be performed in the Azure Portal. However, the commands shown in each section can be run directly in Azure Cloudshell. Cloudshell has all the required utilities to execute the commands. Nothing additional needs to be loaded on a personal device.
 
-> All of the PowerShell commands require the specification of a RESOURCE_GROUP_NAME
-> To make it easy to copy and paste the commands sent an environment variable to the RESOURCE_GROUP_NAME of the FortiGate and K8s deployment
->
-> For example, for a deployment Resource Group named 'k8s-microseg' create an environment variable like this.
->
-> $env:RESOURCE_GROUP_NAME='k8s-microseg'
->
-
 1. Azure Automation Account
     Create Automation Account [Automation Account](https://docs.microsoft.com/en-us/azure/automation/automation-create-standalone-account)
-
-    1. Create a new Resource Group **OR** if using an existing Resource Group Skip this step.
-
-    ```PowerShell
-    New-AzResourceGroup -Name <RESOURCE_GROUP_NAME> -Location eastus
-    ```
 
     1. Create an Automation Account in the Resource Group
         * Choose a Location
@@ -221,20 +249,22 @@ All of the steps can be performed in the Azure Portal. However, the commands sho
     The output will include the URL of the enabled webhook. The webhook is only viewable at creation and cannot be retrieved afterwards. The output will look similar to below.
 
     ```text
-    ResourceGroupName     : automation-01
+    ResourceGroupName     : k8s-microseg
     AutomationAccountName : user-automation-01
     Name                  : routetableupdate
-    CreationTime          : 7/13/2021 8:33:28 PM +00:00
+    CreationTime          : 11/13/2021 8:33:28 PM +00:00
     Description           :
-    ExpiryTime            : 7/12/2022 12:00:00 AM +00:00
+    ExpiryTime            : 11/30/2022 12:00:00 AM +00:00
     IsEnabled             : True
     LastInvokedTime       : 1/1/0001 12:00:00 AM +00:00
-    LastModifiedTime      : 7/13/2021 8:33:28 PM +00:00
+    LastModifiedTime      : 11/13/2021 8:33:28 PM +00:00
     Parameters            : {}
     RunbookName           : ManageDynamicAddressRoutes
     WebhookURI            : https://f5f015ed-f566-483d-c972-0c2c3ca2a296.webhook.eus2.azure-automation.net/webhooks?token=P1GSd4Tasf5i1VYaVkFQvG29QCjkA8AOHY%2bsVLZOFSA%3d
     HybridWorker          :
     ```
+
+### Part 2. FortiGate
 
 1. FortiGate Dynamic Address
     * Create Dynamic Address to match a Web pod
@@ -278,7 +308,7 @@ You can use the commands **diagnose debug  application autod -1** to debug the s
 
 1. Questions
 
-    * Is this setup secure? How is the runbook able to update the UDR without any authentication ?
+    * Is this setup secure? How is the runbook able to update the UDR without any authentication?
     * There is no policy that allows traffic between Web-pod and DB-pod on the FGT. Why is it allowed?  
 
 **************
