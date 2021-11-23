@@ -56,7 +56,7 @@ An Azure Account with a valid Subscription is required.
         * Plan what objects will be created, updated, destroyed
 
     1. Run `terraform apply`
-        * Apply the terraform directives, terrafomr will ask for confirmation of the planned deployment, type `yes`
+        * Apply the terraform directives, terraform will ask for confirmation of the planned deployment, type `yes`
 
     At the end of this step you should have an environment similar to the below
 
@@ -207,7 +207,7 @@ All of the steps can be performed in the Azure Portal. However, the commands sho
     ```PowerShell
     New-AzAutomationRunbook -ResourceGroupName $env:RESOURCE_GROUP_NAME -AutomationAccountName user-automation-01 -Name ManageDynamicAddressRoutes -Type PowerShell
     
-    Import-AzAutomationRunbook -ResourceGroupName $env:RESOURCE_GROUP_NAME -Name ManageDynamicAddressRoutes -AutomationAccountName user-automation-01 -Path ./AzureMicroSeg/Azure/ManageDynamicAddressRoutes.ps1 -Type PowerShell –Force
+    Import-AzAutomationRunbook -ResourceGroupName $env:RESOURCE_GROUP_NAME -Name ManageDynamicAddressRoutes -AutomationAccountName user-automation-01 -Path ./Azure/ManageDynamicAddressRoutes.ps1 -Type PowerShell –Force
     
     Publish-AzAutomationRunbook -ResourceGroupName $env:RESOURCE_GROUP_NAME -AutomationAccountName user-automation-01 -Name ManageDynamicAddressRoutes
     ```
