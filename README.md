@@ -42,14 +42,21 @@ An Azure Account with a valid Subscription is required.
         * TAG      = ""
         * username = ""
         * password = ""
+
         The `terraform.tfvars` file provides inputs for the resources that will be deployed.
+
     1. Run `terraform init`
+        * Initialize the Terraform environment, download required providers
+
     1. Run `terraform validate`
-        * If everything is valid, this message will be displayed
+        * Validate terraform files, references, variables, etc. If everything is valid, this message will be displayed
           `Success! The configuration is valid.`
+
     1. Run `terraform plan`
+        * Plan what objects will be created, updated, destroyed
+
     1. Run `terraform apply`
-        * terraform will ask for confirmation of the planned deployment, type `yes`
+        * Apply the terraform directives, terrafomr will ask for confirmation of the planned deployment, type `yes`
 
     At the end of this step you should have an environment similar to the below
 
@@ -107,7 +114,7 @@ An Azure Account with a valid Subscription is required.
 
 1. Deploy two pods, one tagged with the label app=web and the other with the label app=db. You can use the provided example web-db-deployment.yaml
 
-    `kubectl apply -f ./AzureMicroSeg/K8S/web-db-deployment.yaml
+    `kubectl apply -f ./AzureMicroSeg/K8S/web-db-deployment.yaml`
 
     ![pods](images/k8s-pods.jpg)
 
@@ -150,6 +157,14 @@ The **Actions** are contained in the PowerShell Modules that have been imported 
 
 All of the steps can be performed in the Azure Portal. However, the commands shown in each section can be run directly in Azure Cloudshell. Cloudshell has all the required utilities to execute the commands. Nothing additional needs to be loaded on a personal device.
 
+> All of the PowerShell commands require the specification of a RESOURCE_GROUP_NAME
+> To make it easy to copy and paste the commands sent an environment variable to the RESOURCE_GROUP_NAME of the FortiGate and K8s deployment
+>
+> For example, for a deployment Resource Group named 'k8s-microseg' create an environment variable like this.
+>
+> $env:RESOURCE_GROUP_NAME='k8s-microseg'
+>
+
 1. Azure Automation Account
     Create Automation Account [Automation Account](https://docs.microsoft.com/en-us/azure/automation/automation-create-standalone-account)
 
@@ -166,13 +181,13 @@ All of the steps can be performed in the Azure Portal. However, the commands sho
         * Indicate the assignment of a System Assigned Identity </br></br>
 
     ```PowerShell
-    New-AzAutomationAccount -ResourceGroupName <RESOURCE_GROUP_NAME> -Location eastus -Name user-automation-01 -AssignSystemIdentity -Plan Basic
+    New-AzAutomationAccount -ResourceGroupName $env:RESOURCE_GROUP_NAME -Location eastus -Name user-automation-01 -AssignSystemIdentity -Plan Basic
     ```
 
     1. Setup Automation Account [Managed Identity] (<https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview>)
 
     ```PowerShell
-    New-AzRoleAssignment -ObjectId (Get-AzAutomationAccount -ResourceGroupName <RESOURCE_GROUP_NAME> -Name user-automation-01).Identity.PrincipalId -RoleDefinitionName "Contributor" -Scope (Get-AzResourceGroup -Name <RESOURCE_GROUP_NAME> -Location eastus).ResourceId
+    New-AzRoleAssignment -ObjectId (Get-AzAutomationAccount -ResourceGroupName $env:RESOURCE_GROUP_NAME -Name user-automation-01).Identity.PrincipalId -RoleDefinitionName "Contributor" -Scope (Get-AzResourceGroup -Name $env:RESOURCE_GROUP_NAME -Location eastus).ResourceId
     ```
 
     1. Import Az PowerShell Modules - These modules are not available by default in a Azure Automation Account. The Powershell command below can be used as an initial import to the Azure Automation Account or as an update.
@@ -183,24 +198,24 @@ All of the steps can be performed in the Azure Portal. However, the commands sho
         * Az.Resources
 
     ```PowerShell
-    @("Accounts","Automation","Compute","Network","Resources") | ForEach-Object {Import-AzAutomationModule -ResourceGroupName <RESOURCE_GROUP_NAME> -AutomationAccountName user-automation-01 -Name Az.$_  -ContentLinkUri https://www.powershellgallery.com/api/v2/package/Az.$_}
+    @("Accounts","Automation","Compute","Network","Resources") | ForEach-Object {Import-AzAutomationModule -ResourceGroupName $env:RESOURCE_GROUP_NAME -AutomationAccountName user-automation-01 -Name Az.$_  -ContentLinkUri https://www.powershellgallery.com/api/v2/package/Az.$_}
     ```
 
 1. Azure Automation Runbook
     1. Create, Import, and Publish Runbook - A Runbook is simply the PowerShell Code that runs in response to a trigger. Triggers can be manual, scheduled, and webhook.
 
     ```PowerShell
-    New-AzAutomationRunbook -ResourceGroupName <RESOURCE_GROUP_NAME> -AutomationAccountName user-automation-01 -Name ManageDynamicAddressRoutes -Type PowerShell
+    New-AzAutomationRunbook -ResourceGroupName $env:RESOURCE_GROUP_NAME -AutomationAccountName user-automation-01 -Name ManageDynamicAddressRoutes -Type PowerShell
     
-    Import-AzAutomationRunbook -Name ManageDynamicAddressRoutes -ResourceGroupName <RESOURCE_GROUP_NAME> -AutomationAccountName user-automation-01 -Path ./AzureMicroSeg/Azure/ManageDynamicAddressRoutes.ps1 -Type PowerShell –Force
+    Import-AzAutomationRunbook -ResourceGroupName $env:RESOURCE_GROUP_NAME -Name ManageDynamicAddressRoutes -AutomationAccountName user-automation-01 -Path ./AzureMicroSeg/Azure/ManageDynamicAddressRoutes.ps1 -Type PowerShell –Force
     
-    Publish-AzAutomationRunbook -ResourceGroupName <RESOURCE_GROUP_NAME> -AutomationAccountName user-automation-01 -Name ManageDynamicAddressRoutes
+    Publish-AzAutomationRunbook -ResourceGroupName $env:RESOURCE_GROUP_NAME -AutomationAccountName user-automation-01 -Name ManageDynamicAddressRoutes
     ```
 
     1. Create Webhook
 
     ```PowerShell
-    New-AzAutomationWebhook -ResourceGroupName <RESOURCE_GROUP_NAME> -AutomationAccountName user-automation-01 -RunbookName ManageDynamicAddressRoutes -Name routetableupdate -IsEnabled $True -ExpiryTime "11/30/2022" -Force
+    New-AzAutomationWebhook -ResourceGroupName $env:RESOURCE_GROUP_NAME -AutomationAccountName user-automation-01 -RunbookName ManageDynamicAddressRoutes -Name routetableupdate -IsEnabled $True -ExpiryTime "11/30/2022" -Force
     ```
 
     The output will include the URL of the enabled webhook. The webhook is only viewable at creation and cannot be retrieved afterwards. The output will look similar to below.
