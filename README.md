@@ -56,14 +56,19 @@ An Azure Account with a valid Subscription is required.
 
   * Clone the Github AzureMicroSeg repository to Cloudshell
 
-    `git clone https://github.com/fortinetsecdevops/AzureMicroSeg`
+    ```bash
+    git clone https://github.com/fortinetsecdevops/AzureMicroSeg
+    ```
+
     ![clone](images/git_clone.jpg)
 
 1. Use **Terraform** to deploy the FortiGate and Azure Networking
 
 * Change to the directory Terraform
 
-  `cd Terraform`
+  ```bash
+  cd Terraform
+  ```
 
 * Update the `terraform.tfvars` file, provide values for these variables. The easiest way to update the file is to use the Cloudshell editor.
 
@@ -138,25 +143,36 @@ At the end of this step environment will be similar to the one pictured below
 
   * Create a ServiceAccount for the FortiGate
 
-    `kubectl create serviceaccount fgt-svcaccount`
+    ```bash
+    kubectl create serviceaccount fgt-svcaccount
+    ```
 
   * Create a clusterrole
 
-      `kubectl apply -f ./AzureMicroSeg/K8S/fgt-k8s-connector.yaml`
+    ```bash
+    kubectl apply -f ./AzureMicroSeg/K8S/fgt-k8s-connector.yaml
+    ```
 
   * Create a clusterrolebinding
 
-      `kubectl create clusterrolebinding fgt-connector --clusterrole=fgt-connector --serviceaccount=default:fgt-svcaccount`
+    ```bash
+    kubectl create clusterrolebinding fgt-connector --clusterrole=fgt-connector --serviceaccount=default:fgt-svcaccount
+    ```
 
   * Extract the ServiceAccount secret token and configure the FortiGate
 
-      `kubectl get secrets -o jsonpath="{.items[?(@.metadata.annotations['kubernetes\.io/service-account\.name']=='fgt-svcaccount')].data.token}"| base64 --decode`
+    ```bash
+    kubectl get secrets -o jsonpath="{.items[?(@.metadata.annotations['kubernetes\.io/service-account\.name']=='fgt-svcaccount')].data.token}"| base64 --decode
+    ```
 
+  * Setup the FortiGate Kubernetes Connector
     ![K8s-connector](images/k8s-connector.jpg)
 
-1. Deploy two pods, one tagged with the label app=web and the other with the label app=db. You can use the provided example web-db-deployment.yaml
+1. Deploy two pods, one tagged with the label app=web and the other with the label app=db. Use the provided example web-db-deployment.yaml
 
-    `kubectl apply -f ./AzureMicroSeg/K8S/web-db-deployment.yaml`
+    ```bash
+    kubectl apply -f ./AzureMicroSeg/K8S/web-db-deployment.yaml
+    ```
 
     ![pods](images/k8s-pods.jpg)
 
@@ -181,7 +197,6 @@ A FortiGate Automation Stitch brings together a trigger and an action. In this e
 This exercise covers the
 
 * Setup of an Azure Automation Account
-* Importing required Azure PowerShell Modules
 * Creation and Publishing of Azure Runbook
 * Creation of Webhook to invoke Azure Runbook
 * Creation of FortiGate Dynamic Address
@@ -193,9 +208,9 @@ This exercise covers the
 
 Automation in Azure can be accomplished in a number of ways, Logic Apps, Function Apps, Runbooks, etc. Each of the automation methods can be triggered in a number of ways, Events, Webhooks, Schedules, etc.
 
-This part of the exercise goes through the process of creating an Azure Automation account that enables the running of an Azure Runbook via a Webhook. An Azure Runbook is just a PowerShell script that the Automation Account can run. The actions the Runbook can perform are controlled by the rights and scope (where those actions can be performed) that have been granted to the Automation Account.
+This part of the exercise goes through the process of creating an Azure Automation account that enables the running of an Azure Runbook via a Webhook. An Azure Runbook is a PowerShell or Python script that the Automation Account can run. The actions the Runbook can perform are controlled by the rights and scope (where those actions can be performed) that have been granted to the Automation Account.
 
-The **Actions** are contained in the PowerShell Modules that have been imported into the Automation Account. The PowerShell Modules are libraries of commands called Cmdlets that are grouped into several domains. For example, Accounts, Automation, Compute, Network, and Resources.
+The **Actions** are contained in the PowerShell Modules that have been imported into the Automation Account. The PowerShell Modules are libraries of commands called Cmdlets that are grouped into several domains. For example, Accounts, Automation, Compute, Network, and Resources are the domains of the PowerShell Cmdlets used in the PowerShell code in this repository.
 
 All of the steps can be performed in the Azure Portal. However, the commands shown in each section can be run directly in Azure Cloudshell. Cloudshell has all the required utilities to execute the commands. Nothing additional needs to be loaded on a personal device.
 
@@ -206,7 +221,7 @@ All of the steps can be performed in the Azure Portal. However, the commands sho
         * Choose a Location
         * Provide a Name
         * Choose the Basic Plan
-        * Indicate the assignment of a System Assigned Identity </br></br>
+        * Indicate the assignment of a System Assigned Identity
 
     ```PowerShell
     New-AzAutomationAccount -ResourceGroupName $env:RESOURCE_GROUP_NAME -Location eastus -Name user-automation-01 -AssignSystemIdentity -Plan Basic
@@ -216,17 +231,6 @@ All of the steps can be performed in the Azure Portal. However, the commands sho
 
     ```PowerShell
     New-AzRoleAssignment -ObjectId (Get-AzAutomationAccount -ResourceGroupName $env:RESOURCE_GROUP_NAME -Name user-automation-01).Identity.PrincipalId -RoleDefinitionName "Contributor" -Scope (Get-AzResourceGroup -Name $env:RESOURCE_GROUP_NAME -Location eastus).ResourceId
-    ```
-
-    1. Import Az PowerShell Modules - These modules are not available by default in a Azure Automation Account. The Powershell command below can be used as an initial import to the Azure Automation Account or as an update.
-        * Az.Accounts
-        * Az.Automation
-        * Az.Compute
-        * Az.Network
-        * Az.Resources
-
-    ```PowerShell
-    @("Accounts","Automation","Compute","Network","Resources") | ForEach-Object {Import-AzAutomationModule -ResourceGroupName $env:RESOURCE_GROUP_NAME -AutomationAccountName user-automation-01 -Name Az.$_  -ContentLinkUri https://www.powershellgallery.com/api/v2/package/Az.$_}
     ```
 
 1. Azure Automation Runbook
@@ -267,16 +271,21 @@ All of the steps can be performed in the Azure Portal. However, the commands sho
 ### Part 2. FortiGate
 
 1. FortiGate Dynamic Address
-    * Create Dynamic Address to match a Web pod
+    * **Create** Dynamic Address to match a [***web*** pod](./FortiGate/address-pod-app-web.cfg)
+
         ![podsaddress](images/k8s-pods-address.jpg)
 
-    * Repeat the same for the DB pod
+    * **Repeat** the same for the [***db*** pod](./FortiGate/address-pod-app-db.cfg)
 
 1. FortiGate Automation Stitch
-    * Create [Trigger](./FortiGate/routetableupdate-trigger.cfg)
+    * **Create** [***web*** pod Trigger](./FortiGate/routetableupdate-trigger-web.cfg)
         * Log Address Added
         * Log Address Removed
+
         ![FortiGate Automation Stitch Trigger](images/fgt-automation-stitch-trigger.jpg)
+
+    * Repeat the same for the [***db*** pod Trigger](./FortiGate/routetableupdate-trigger-db.cfg)
+
     * Create [Action](./FortiGate/routetableupdate-action.cfg)
         * Webhook
         * Body
@@ -288,7 +297,7 @@ All of the steps can be performed in the Azure Portal. However, the commands sho
         ![FortiGate Automation Stitch Action](images/fgt-automation-stitch-stitch.jpg)
 
 1. Delete the DB and Web pods to force their replacement. Check if the FGT detects an address change and triggers the automation Stich.
-You can use the commands **diagnose debug  application autod -1** to debug the stich.
+You can use the commands **diagnose debug  application autod -1** to debug the stitch.
 
     ![podsaddressroute](images/k8s-pods-routeadded.jpg)
 
@@ -318,10 +327,10 @@ You can use the commands **diagnose debug  application autod -1** to debug the s
 1. Scale the K8S cluster to two nodes
 
     ```bash
-    ./aks-engine scale --resource-group k8s-microseg --api-model /home/mounira/_output/k8smicroseg/apimodel.json  --new-node-count 2 --node-pool nodepool1 --apiserver  k8smicroseg.eastus.cloudapp.azure.com --location eastus
+    ./aks-engine scale --resource-group $env:RESOURCE_GROUP_NAME --api-model  ./_output/k8smicroseg-RANDOM_ID/apimodel.json --new-node-count 2 --node-pool nodepool1 --apiserver  k8smicroseg-RANDOM_ID.eastus.cloudapp.azure.com --location eastus
     ```
 
-    [podsaddresscurl](images/scaledeployment.jpg)
+    ![podsaddresscurl](images/scaledeployment.jpg)
 
 1. Taint one node to receive Web pods only and the other one to receive DB pods (update with your own Node names)
 
