@@ -87,11 +87,16 @@ data "template_file" "dut1_customdata" {
 
     vnet_network = var.vnetcidr[0]
 
-    resource_group = var.azurerm_resource_group.rg.name
+    resource_group = azurerm_resource_group.rg.name
 
   }
 }
 
+resource "local_file" "fgt-cfg-file" {
+
+  filename = "fgt-config.txt"
+  content  = data.template_file.dut1_customdata.rendered
+}
 resource "azurerm_virtual_machine" "dut1" {
   name                         = "${var.TAG}-${var.project}-fgt1"
   location                     = azurerm_resource_group.rg.location
