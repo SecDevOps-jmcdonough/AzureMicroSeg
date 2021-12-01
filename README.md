@@ -119,7 +119,7 @@ At the end of this step environment will be similar to the one pictured below
 
     ```bash
     cd ..
-    ./aks-engine deploy --dns-prefix k8smicroseg --resource-group $env:RESOURCE_GROUP_NAME --location eastus --api-model ./AzureMicroSeg/Terraform/aks-calico-azure.json --auto-suffix
+    ./aks-engine deploy --dns-prefix k8smicroseg --resource-group $env:RESOURCE_GROUP_NAME --location eastus --api-model ./Terraform/aks-calico-azure.json --auto-suffix
     ```
 
 1. Verify that the deployment is successful by listing the K8S nodes. To access the cluster, copy the kubeconfig file that was generated during the previous step, to the ~/.kube directory.
@@ -149,7 +149,7 @@ At the end of this step environment will be similar to the one pictured below
   * Create a clusterrole
 
     ```bash
-    kubectl apply -f ./AzureMicroSeg/K8S/fgt-k8s-connector.yaml
+    kubectl apply -f ./K8S/fgt-k8s-connector.yaml
     ```
 
   * Create a clusterrolebinding
@@ -170,7 +170,7 @@ At the end of this step environment will be similar to the one pictured below
 1. Deploy two pods, one tagged with the label app=web and the other with the label app=db. Use the provided example web-db-deployment.yaml
 
     ```bash
-    kubectl apply -f ./AzureMicroSeg/K8S/web-db-deployment.yaml
+    kubectl apply -f ./K8S/web-db-deployment.yaml
     ```
 
     ![pods](images/k8s-pods.jpg)
@@ -285,27 +285,33 @@ All of the steps can be performed in the Azure Portal. However, the commands sho
 
     * Repeat the same for the [***db*** pod Trigger](./FortiGate/routetableupdate-trigger-db.cfg)
 
-    * Create [Action](./FortiGate/routetableupdate-action.cfg)
-        * Webhook
-        * Body
-        * Headers
+    * Create [***web*** pod Action](./FortiGate/routetableupdate-action-web.cfg)
+        * Webhook <- Created in the Azure Automation setup
+        * Body <- send the action (add or remove) and the IP address `{"action":"%%log.action%%", "addr":"%%log.addr%%"}`
+        * Headers <- ResourceGroupName, RouteTableName, RouteNamePrefix, NextHopIp
+
         ![FortiGate Automation Stitch Action](images/fgt-automation-stitch-action.jpg)
-    * Create [Stitch](./FortiGate/routetableupdate-stitch.cfg)
+
+    * Repeat for [***db*** pod Action](./FortiGate/routetableupdate-action-db.cfg)
+
+    * Create [***web*** pod Stitch](./FortiGate/routetableupdate-stitch-web.cfg)
         * Trigger
         * Action
         ![FortiGate Automation Stitch Action](images/fgt-automation-stitch-stitch.jpg)
+
+    * Repeat for [***db*** pod Stitch](./FortiGate/routetableupdate-stitch-db.cfg)
 
 1. Delete the DB and Web pods to force their replacement. Check if the FGT detects an address change and triggers the automation Stich.
 You can use the commands **diagnose debug  application autod -1** to debug the stitch.
 
     ![podsaddressroute](images/k8s-pods-routeadded.jpg)
 
-1. Access the web POD, use curl and try to connect to the DB Pod from the web POD. Example below (replace with your own POD name and ip address)
+1. Access the web POD, use curl and try to connect to the DB Pod from the web POD. Example below (replace POD name and IP address)
 
     ```bash
     kubectl get pods -o wide
     kubectl exec --tty --stdin web-deployment-66bf8c979c-ql2kn -- /bin/bash
-    while true; do curl -v http://10.33.3.29:8080; sleep 2; done;
+    curl -v http://10.33.3.29:8080
     ```
 
     ![podsaddresscurl](images/k8s-pods-curl.jpg)
@@ -341,7 +347,7 @@ You can use the commands **diagnose debug  application autod -1** to debug the s
     ```bash
     kubectl delete deployment db-deployment
     kubectl delete deployment web-deployment
-    kubectl apply -f web-db-deployment-tolerations.yaml
+    kubectl apply -f ./K8S/web-db-deployment-tolerations.yaml
     ```
 
     * Verify that the two pods are deployed in two different nodes. use the command **kubectl get pods -o wide**
@@ -356,5 +362,3 @@ You can use the commands **diagnose debug  application autod -1** to debug the s
     * What is your conclusion ?
 
  **************
-
-## Chapter 5 [Optional] - Calico policy to control traffic inside the cluster
