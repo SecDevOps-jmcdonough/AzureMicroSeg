@@ -59,14 +59,6 @@ An Azure Account with a valid Subscription is required.
     chmod +x aks-engine 
     ```
 
-  * Clone the Github AzureMicroSeg repository to Cloudshell
-
-    ```bash
-    git clone https://github.com/fortinetsecdevops/AzureMicroSeg
-    ```
-
-    ![clone](images/git_clone.jpg)
-
 1. Use **Terraform** to deploy the FortiGate and Azure Networking
 
 * Change to the directory Terraform
@@ -81,10 +73,12 @@ An Azure Account with a valid Subscription is required.
   * project          = ""
   * TAG              = "k8s" <- This value does not have to change, shown for illustrative purposes
 
+  >
   > The deployment Azure RESOURCE GROUP NAME  will be the combination of the *TAG* and *project* values
   >
   > For example, if the TAG value is **k8s** and the project value is **microseg**
   > the RESOURCE GROUP NAME will be **k8s-microseg**
+  >
 
 The `terraform.tfvars` file provides inputs for the resources that will be deployed.
 
@@ -93,7 +87,7 @@ The `terraform.tfvars` file provides inputs for the resources that will be deplo
 
 1. Run `terraform validate`
     * Validate terraform files, references, variables, etc. If everything is valid, this message will be displayed
-        `Success! The configuration is valid.`
+        **Success! The configuration is valid.**
 
 1. Run `terraform plan`
     * Plan what objects will be created, updated, destroyed
@@ -306,13 +300,11 @@ You can use the commands **diagnose debug  application autod -1** to debug the s
 
     ![podsaddressroute](images/k8s-pods-routeadded.jpg)
 
-1. Access the web POD, install curl and try to connect to the DB Pod from the web POD. Example below (replace with your own POD name and ip address)
+1. Access the web POD, use curl and try to connect to the DB Pod from the web POD. Example below (replace with your own POD name and ip address)
 
     ```bash
     kubectl get pods -o wide
     kubectl exec --tty --stdin web-deployment-66bf8c979c-ql2kn -- /bin/bash
-    apt-get update
-    apt-get install curl
     while true; do curl -v http://10.33.3.29:8080; sleep 2; done;
     ```
 

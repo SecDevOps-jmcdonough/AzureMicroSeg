@@ -87,6 +87,8 @@ data "template_file" "dut1_customdata" {
 
     vnet_network = var.vnetcidr[0]
 
+    resource_group = var.azurerm_resource_group.rg.name
+
   }
 }
 

@@ -36,7 +36,7 @@ config firewall address
     edit "K8S_Nodes"
         set type dynamic
         set sdn "AzureSDN"
-        set filter "Subnet=k8s-microseg-subnet-k8s_master | Subnet=k8s-microseg-subnet-K8s_nodes"
+        set filter "Subnet=${resource_group}-subnet-k8s_master | Subnet=${resource_group}-subnet-K8s_nodes"
     next
 end
 config firewall policy
