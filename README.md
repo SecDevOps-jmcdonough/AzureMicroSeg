@@ -21,9 +21,11 @@ An Azure Account with a valid Subscription is required.
 
 1. Get Subscription ID, if more than one Subscription is available Determine which subscription is currently the default Subscription. If necessary Select the desired Subscription.
 
-    `Get-AzSubscription`
-    `Get-AzContext`
-    `Select-AzSubscription -Subscription <subscription_id>`
+    ```PowerShell
+    Get-AzSubscription
+    Get-AzContext
+    Select-AzSubscription -Subscription <subscription_id>
+    ```
 
 ## Chapter 2 - Create the environment [estimated duration 20min]
 
@@ -38,7 +40,10 @@ An Azure Account with a valid Subscription is required.
 
 1. Clone the Github AzureMicroSeg repository to Cloudshell
 
-    `git clone https://github.com/fortinetsecdevops/AzureMicroSeg`
+    ```bash
+    git clone https://github.com/fortinetsecdevops/AzureMicroSeg
+    ```
+
     ![clone](images/git_clone.jpg)
 
 1. Install the [aks-engine v0.64.0](https://github.com/Azure/aks-engine/releases/)
